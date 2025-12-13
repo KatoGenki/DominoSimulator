@@ -101,7 +101,7 @@ namespace StarterAssets
         private float _targetRotation = 0.0f;
         private float _rotationVelocity;
         private float _verticalVelocity;
-        private float _terminalVelocity = 53.0f;
+        private float _terminalVelocity = 159.0f;
 
         // timeout deltatime
         private float _jumpTimeoutDelta;
@@ -233,91 +233,189 @@ namespace StarterAssets
 
         // ThirdPersonController.cs の Move関数全体を以下に置き換えてください
 
+        // private void Move()
+        // {
+        //     // --- 1. 設置モード (Building) チェックと移動制限 ---
+        //     if (CurrentState == PlayerState.Building)
+        //     {
+        //         // 移動停止のための処理
+        //         _speed = 0f;
+        //         _animationBlend = 0f;
+        //         if (_hasAnimator)
+        //         {
+        //             _animator.SetFloat(_animIDSpeed, 0f);
+        //             _animator.SetFloat(_animIDMotionSpeed, 0f);
+        //         }
+        //         // キャラクターコントローラーを動かさない (重力はJumpAndGravityで処理される)
+        //         return; 
+        //     }
+        //     // --- ------------------------------------------ ---
+            
+        //     // --- 2. Standingモード (TPS) の移動ロジック (既存のロジック) ---
+            
+        //     // set target speed based on move speed, sprint speed and if sprint is pressed
+        //     float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed; // 1回目の定義は削除されている
+            
+        //     // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+
+        //     // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
+        //     // if there is no input, set the target speed to 0
+        //     if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+
+        //     // a reference to the players current horizontal velocity
+        //     float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+
+        //     float speedOffset = 0.1f;
+        //     float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
+
+        //     // accelerate or decelerate to target speed
+        //     if (currentHorizontalSpeed < targetSpeed - speedOffset ||
+        //         currentHorizontalSpeed > targetSpeed + speedOffset)
+        //     {
+        //         // creates curved result rather than a linear one giving a more organic speed change
+        //         // note T in Lerp is clamped, so we don't need to clamp our speed
+        //         _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
+        //             Time.deltaTime * SpeedChangeRate);
+
+        //         // round speed to 3 decimal places
+        //         _speed = Mathf.Round(_speed * 1000f) / 1000f;
+        //     }
+        //     else
+        //     {
+        //         _speed = targetSpeed;
+        //     }
+
+        //     _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
+        //     if (_animationBlend < 0.01f) _animationBlend = 0f;
+            
+        //     // normalise input direction
+        //     Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+
+        //     // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
+        //     // if there is a move input rotate player when the player is moving
+        //     if (_input.move != Vector2.zero)
+        //     {
+        //         _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
+        //                                 _mainCamera.transform.eulerAngles.y;
+        //         float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
+        //             RotationSmoothTime);
+
+        //         // rotate to face input direction relative to camera position
+        //         transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+        //     }
+
+
+        //     Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+
+        //     // move the player
+        //     _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
+        //                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+
+        //     // update animator if using character
+        //     if (_hasAnimator)
+        //     {
+        //         _animator.SetFloat(_animIDSpeed, _animationBlend);
+        //         _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+        //     }
+        // }
         private void Move()
-        {
-            // --- 1. 設置モード (Building) チェックと移動制限 ---
-            if (CurrentState == PlayerState.Building)
+        {
+            // --- 1. 設置モード (Building) チェックと移動制限 ---
+            if (CurrentState == PlayerState.Building)
+            {
+                // 移動停止のための処理
+                _speed = 0f;
+                _animationBlend = 0f;
+                if (_hasAnimator)
+                {
+                    _animator.SetFloat(_animIDSpeed, 0f);
+                    _animator.SetFloat(_animIDMotionSpeed, 0f);
+                }
+                // キャラクターコントローラーを動かさない (重力はJumpAndGravityで処理される)
+                return; 
+            }
+            // --- ------------------------------------------ ---
+            
+            // --- 2. Standingモード (TPS) の移動ロジック (既存のロジック) ---
+            
+            // set target speed based on move speed, sprint speed and if sprint is pressed
+            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed; 
+            
+            // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+
+            // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
+            // if there is no input, set the target speed to 0
+            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+
+            // a reference to the players current horizontal velocity
+            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+
+            float speedOffset = 0.1f;
+            float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
+
+            // accelerate or decelerate to target speed
+            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
+                currentHorizontalSpeed > targetSpeed + speedOffset)
+            {
+                // creates curved result rather than a linear one giving a more organic speed change
+                // note T in Lerp is clamped, so we don't need to clamp our speed
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
+                    Time.deltaTime * SpeedChangeRate);
+
+                // round speed to 3 decimal places
+                _speed = Mathf.Round(_speed * 1000f) / 1000f;
+            }
+            else
+            {
+                _speed = targetSpeed;
+            }
+
+            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
+            if (_animationBlend < 0.01f) _animationBlend = 0f;
+            
+            // normalise input direction
+            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+
+            // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
+            // if there is a move input rotate player when the player is moving
+            if (_input.move != Vector2.zero)
+            {
+                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
+                                        _mainCamera.transform.eulerAngles.y;
+                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
+                    RotationSmoothTime);
+
+                // rotate to face input direction relative to camera position
+                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+            }
+
+
+            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+
+            // ***** ここから修正箇所 *****
+            Vector3 horizontalMovement = targetDirection.normalized * (_speed * Time.deltaTime);
+
+            // 壁登りバグ（高く飛ぶ問題）の対策：
+            // 地面にいる（Grounded）状態でジャンプ入力がある（_input.jump）場合、
+            // 水平方向の移動（horizontalMovement）を強制的にゼロにし、
+            // 壁との摩擦・衝突による意図しない垂直速度のブーストを防ぐ
+            if (Grounded && _input.jump) 
             {
-                // 移動停止のための処理
-                _speed = 0f;
-                _animationBlend = 0f;
-                if (_hasAnimator)
-                {
-                    _animator.SetFloat(_animIDSpeed, 0f);
-                    _animator.SetFloat(_animIDMotionSpeed, 0f);
-                }
-                // キャラクターコントローラーを動かさない (重力はJumpAndGravityで処理される)
-                return; 
-            }
-            // --- ------------------------------------------ ---
-            
-            // --- 2. Standingモード (TPS) の移動ロジック (既存のロジック) ---
-            
-            // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed; // 1回目の定義は削除されている
-            
-            // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
-
-            // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
-
-            // a reference to the players current horizontal velocity
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-
-            float speedOffset = 0.1f;
-            float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
-
-            // accelerate or decelerate to target speed
-            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                currentHorizontalSpeed > targetSpeed + speedOffset)
-            {
-                // creates curved result rather than a linear one giving a more organic speed change
-                // note T in Lerp is clamped, so we don't need to clamp our speed
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-                    Time.deltaTime * SpeedChangeRate);
-
-                // round speed to 3 decimal places
-                _speed = Mathf.Round(_speed * 1000f) / 1000f;
-            }
-            else
-            {
-                _speed = targetSpeed;
+                horizontalMovement = Vector3.zero;
             }
 
-            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
-            if (_animationBlend < 0.01f) _animationBlend = 0f;
-            
-            // normalise input direction
-            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+            // move the player
+            _controller.Move(horizontalMovement +
+                                    new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+            // ***** ここまで修正箇所 *****
 
-            // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is a move input rotate player when the player is moving
-            if (_input.move != Vector2.zero)
-            {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                        _mainCamera.transform.eulerAngles.y;
-                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                    RotationSmoothTime);
-
-                // rotate to face input direction relative to camera position
-                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-            }
-
-
-            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-
-            // move the player
-            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-                                    new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
-
-            // update animator if using character
-            if (_hasAnimator)
-            {
-                _animator.SetFloat(_animIDSpeed, _animationBlend);
-                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
-            }
-        }
+            // update animator if using character
+            if (_hasAnimator)
+            {
+                _animator.SetFloat(_animIDSpeed, _animationBlend);
+                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+            }
+        }
     private void HandleInputState()
         {
             // Eキー (BuildMode): 設置モード ⇔ 移動モード のトグル切り替え
@@ -403,7 +501,7 @@ namespace StarterAssets
                 _input.jump = false;
             }
 
-            // apply gravity over time if under terminal (multiply by delta time twice to linearly speed up over time)
+            
             if (_verticalVelocity < _terminalVelocity)
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
@@ -450,6 +548,29 @@ namespace StarterAssets
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
         }
+
+        // CharacterControllerが他のコライダーに衝突したときに呼ばれる
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            // 1. 地面にいることを確認（空中での衝突は重力で対処）
+            if (!Grounded) return;
+
+            // 2. 衝突した面が水平に近い（壁、または登れない急斜面）かチェック
+            // hit.normal.y は法線ベクトルのY成分。0.1f 未満ならほぼ垂直と見なせる。
+            if (hit.normal.y < 0.1f) 
+            {
+                // 3. 垂直速度を強制的にリセット（負の値にして地面に張り付かせる）
+                // これにより、壁からの意図しない上向きの反力成分を無効化する。
+                if (_verticalVelocity > 0f)
+                {
+                    // 0fにするとバグる可能性があるため、小さな負の値(-2f)を維持
+                    _verticalVelocity = -2f; 
+
+                    // おまけ：ジャンプ入力フラグもリセットし、ジャンプそのものも防止する
+                    _input.jump = false;
+                }
+            }
+        }
 
         // --- 状態更新時の処理（カメラとアニメ） ---
         private void UpdateState()
