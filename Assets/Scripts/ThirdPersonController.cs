@@ -115,6 +115,8 @@ namespace StarterAssets
         private int _animIDMotionSpeed;
         private int _animIDIsBuilding;
 
+        private DominoTrigger[] handFootTriggers;  // 手足のDominoTriggerコンポーネントを保持する配列
+
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -168,6 +170,7 @@ namespace StarterAssets
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
+            handFootTriggers = GetComponentsInChildren<DominoTrigger>(true);
         }
 
         private void Update()
@@ -416,29 +419,26 @@ namespace StarterAssets
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
             }
         }
-    private void HandleInputState()
-        {
-            // Eキー (BuildMode): 設置モード ⇔ 移動モード のトグル切り替え
-            if (_input.buildMode)
-            {
-                _input.buildMode = false; // 入力フラグを消費（リセット）
-                
-                // 現在が「設置モード」なら -> 「立ち状態」に戻す
-                // (空中でも設置モード解除はできた方がバグ回避になるため、ここは条件なし)
-                if (CurrentState == PlayerState.Building)
-                {
-                    CurrentState = PlayerState.Standing;
-                    UpdateState();
-                }
-                // 現在が「立ち状態」なら -> 「地面にいる時(Grounded)のみ」設置モードへ移行
-                else if (Grounded) 
-                {
-                    CurrentState = PlayerState.Building;
-                    UpdateState();
-                }
-                // ※ else (空中にいる場合) は何もしない
-            }
-        }
+        private void HandleInputState()
+        {
+            // Eキー (BuildMode): 設置モード ⇔ 移動モード のトグル切り替え
+            if (_input.buildMode)
+            {
+                _input.buildMode = false; // 入力フラグを消費（リセット）
+                
+                // 状態をトグル切り替え
+                if (CurrentState == PlayerState.Building)
+                {
+                    CurrentState = PlayerState.Standing;
+                    UpdateState(); // ★ 状態更新関数を呼び出し ★
+                }
+                else if (Grounded) 
+                {
+                    CurrentState = PlayerState.Building;
+                    UpdateState(); // ★ 状態更新関数を呼び出し ★
+                }
+            }
+        }
         private void JumpAndGravity()
         {
             if (Grounded)
@@ -575,6 +575,7 @@ namespace StarterAssets
         // --- 状態更新時の処理（カメラとアニメ） ---
         private void UpdateState()
         {
+            bool isBuilding = CurrentState == PlayerState.Building;
             // カメラの優先度切り替え（方針A）
             if (CurrentState == PlayerState.Building)
             {
@@ -592,6 +593,18 @@ namespace StarterAssets
                 TPSCamera.Priority = 20;
 
                 // _controller.height = 2.0f; // 例: 高さを戻す
+            }
+            // ***** 追加箇所：ドミノトリガーの有効/無効化 *****
+            if (handFootTriggers != null)
+            {
+                foreach (var trigger in handFootTriggers)
+                {
+                    // Building モードのときだけ、ドミノを倒す機能を有効にする（isBuildingの値をそのまま渡す）
+                    trigger.IsActive = isBuilding;
+
+                    // コライダー自体を有効/無効にしたい場合は以下も実行
+                    // trigger.gameObject.SetActive(isBuilding); 
+                }
             }
 
             // アニメーターへの通知（四つん這い=Buildingとして扱う）
