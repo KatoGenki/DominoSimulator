@@ -91,6 +91,14 @@ namespace StarterAssets
         [Tooltip("一人称視点 (FPS) 用の Cinemachine Virtual Camera")]
         public CinemachineVirtualCamera FPSCamera;
 
+        [Header("Domino System")]
+        [Tooltip("ドミノ設置を管理するスクリプト")]
+        public DominoPlacement dominoPlacementManager; // Unityエディタで設定
+
+        // ドミノ設置モードで使用する入力値
+        private bool _placeDomino = false; 
+        private Vector2 _mouseDelta = Vector2.zero;
+
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -181,6 +189,19 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+
+            // 1. マウスの移動量(_mouseDelta)を更新
+            // CameraRotationで使用している _input.look をそのまま利用します
+            if (_input != null)
+            {
+                _mouseDelta = _input.look;
+            }
+
+            // 2. Buildingモードのときだけ、入力値をDominoPlacementに渡す
+            if (CurrentState == PlayerState.Building && dominoPlacementManager != null)
+            {
+                dominoPlacementManager.UpdatePlacementInput(_placeDomino, _mouseDelta);
+            }
         }
 
         private void LateUpdate()
@@ -234,93 +255,13 @@ namespace StarterAssets
                 _cinemachineTargetYaw, 0.0f);
         }
 
-        // ThirdPersonController.cs の Move関数全体を以下に置き換えてください
-
-        // private void Move()
-        // {
-        //     // --- 1. 設置モード (Building) チェックと移動制限 ---
-        //     if (CurrentState == PlayerState.Building)
-        //     {
-        //         // 移動停止のための処理
-        //         _speed = 0f;
-        //         _animationBlend = 0f;
-        //         if (_hasAnimator)
-        //         {
-        //             _animator.SetFloat(_animIDSpeed, 0f);
-        //             _animator.SetFloat(_animIDMotionSpeed, 0f);
-        //         }
-        //         // キャラクターコントローラーを動かさない (重力はJumpAndGravityで処理される)
-        //         return; 
-        //     }
-        //     // --- ------------------------------------------ ---
-            
-        //     // --- 2. Standingモード (TPS) の移動ロジック (既存のロジック) ---
-            
-        //     // set target speed based on move speed, sprint speed and if sprint is pressed
-        //     float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed; // 1回目の定義は削除されている
-            
-        //     // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
-
-        //     // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-        //     // if there is no input, set the target speed to 0
-        //     if (_input.move == Vector2.zero) targetSpeed = 0.0f;
-
-        //     // a reference to the players current horizontal velocity
-        //     float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-
-        //     float speedOffset = 0.1f;
-        //     float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
-
-        //     // accelerate or decelerate to target speed
-        //     if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-        //         currentHorizontalSpeed > targetSpeed + speedOffset)
-        //     {
-        //         // creates curved result rather than a linear one giving a more organic speed change
-        //         // note T in Lerp is clamped, so we don't need to clamp our speed
-        //         _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-        //             Time.deltaTime * SpeedChangeRate);
-
-        //         // round speed to 3 decimal places
-        //         _speed = Mathf.Round(_speed * 1000f) / 1000f;
-        //     }
-        //     else
-        //     {
-        //         _speed = targetSpeed;
-        //     }
-
-        //     _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
-        //     if (_animationBlend < 0.01f) _animationBlend = 0f;
-            
-        //     // normalise input direction
-        //     Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
-
-        //     // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-        //     // if there is a move input rotate player when the player is moving
-        //     if (_input.move != Vector2.zero)
-        //     {
-        //         _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-        //                                 _mainCamera.transform.eulerAngles.y;
-        //         float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-        //             RotationSmoothTime);
-
-        //         // rotate to face input direction relative to camera position
-        //         transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-        //     }
-
-
-        //     Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-
-        //     // move the player
-        //     _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-        //                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
-
-        //     // update animator if using character
-        //     if (_hasAnimator)
-        //     {
-        //         _animator.SetFloat(_animIDSpeed, _animationBlend);
-        //         _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
-        //     }
-        // }
+        // Input Systemが左クリックで呼び出す関数
+        public void OnPlaceDomino(InputValue value)
+        {
+            // value.isPressed は、ボタンが押されている間trueを返します。
+            // 値を_placeDominoに保存します。
+            _placeDomino = value.isPressed;
+        }
         private void Move()
         {
             // --- 1. 設置モード (Building) チェックと移動制限 ---
@@ -593,6 +534,12 @@ namespace StarterAssets
                 TPSCamera.Priority = 20;
 
                 // _controller.height = 2.0f; // 例: 高さを戻す
+            }
+
+            // DominoPlacement の有効/無効化
+            if (dominoPlacementManager != null)
+            {
+                dominoPlacementManager.SetPlacementModeActive(isBuilding);
             }
             // ***** 追加箇所：ドミノトリガーの有効/無効化 *****
             if (handFootTriggers != null)

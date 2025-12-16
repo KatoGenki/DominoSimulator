@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using StarterAssets; // ★追加: これがないとStarterAssetsInputsが見つかりません
 
 public class DominoPlacement : MonoBehaviour
 {
@@ -17,12 +18,16 @@ public class DominoPlacement : MonoBehaviour
 
     // 内部変数
     private GameObject _currentPreview;
-    private bool _isHolding = false;
+    private bool _isHolding = false; // 現在ホールド（回転調整）中かどうか
     private Vector2 _mouseDelta;
-    private Vector2 _previousMouseDelta; // 直前のフレームのマウス移動ベクトル
+    private Vector2 _previousMouseDelta; 
     private Quaternion _currentRotationY = Quaternion.identity;
 
-    private PlayerControls _controls;
+    // ThirdPersonControllerから送られてくる入力状態
+    private bool _inputPlaceButton = false; // ボタンが押されているか
+    private bool _prevInputPlaceButton = false; // 前のフレームでボタンが押されていたか
+
+    private StarterAssetsInputs _starterInputs;
 
     void Start()
     {
@@ -33,21 +38,38 @@ public class DominoPlacement : MonoBehaviour
             _currentPreview.SetActive(false);
         }
 
-        // Input System初期化
-        _controls = new PlayerControls();
-        
-        // 1. 左クリック押下/解放
-        _controls.Building.PlaceDomino.started += ctx => _isHolding = true;
-        _controls.Building.PlaceDomino.canceled += ctx => ConfirmPlacement();
+        // コンポーネント取得
+        _starterInputs = GetComponent<StarterAssetsInputs>();
 
-        // 2. マウス移動量 (Delta) の取得
-        _controls.Building.Look.performed += ctx => _mouseDelta = ctx.ReadValue<Vector2>();
-        _controls.Building.Look.canceled += ctx => _mouseDelta = Vector2.zero;
+        if (_starterInputs == null)
+        {
+            Debug.LogError("DominoPlacement: StarterAssetsInputsコンポーネントが見つかりません。");
+        }
+
+        // ★削除: _controls = new PlayerControls(); などの記述は全て削除しました。
+        // 入力は ThirdPersonController から UpdatePlacementInput を通じて受け取るため不要です。
     }
 
     void Update()
     {
-        // 常に位置合わせを行う（移動と回転の同時操作のため）
+        // --- 1. クリック状態の変化を検知 ---
+        // 「押された瞬間」
+        if (_inputPlaceButton && !_prevInputPlaceButton)
+        {
+            _isHolding = true;
+        }
+        // 「離された瞬間」
+        if (!_inputPlaceButton && _prevInputPlaceButton)
+        {
+            ConfirmPlacement();
+        }
+
+        // 状態を更新
+        _prevInputPlaceButton = _inputPlaceButton;
+
+
+        // --- 2. メインロジック ---
+        // 常に位置合わせを行う
         FindPlacementPosition();
 
         if (_isHolding)
@@ -60,23 +82,14 @@ public class DominoPlacement : MonoBehaviour
         _previousMouseDelta = _mouseDelta;
     }
 
-    // --- 円運動（ひねり）の検出ロジック ---
     private void DetectCircularMotion()
     {
-        // マウスの動きが小さすぎる場合は回転処理をしない（ノイズ対策）
         if (_mouseDelta.magnitude < MinMouseSpeed) return;
         if (_previousMouseDelta.magnitude < MinMouseSpeed) return;
 
-        // 1. ベクトルの角度変化を計算 (SignedAngle)
-        // 直前のフレームの移動方向と、現在の移動方向の差分角度を取得
-        // 時計回りならマイナス、反時計回りならプラスの値が返る
         float angleChange = Vector2.SignedAngle(_previousMouseDelta, _mouseDelta);
-
-        // 2. ドミノの回転に適用
-        // 感度を掛けて回転量を決定
         float rotationAmount = angleChange * RotationSensitivity;
 
-        // Y軸回転を加算
         Quaternion rotationToAdd = Quaternion.Euler(0, rotationAmount, 0);
         _currentRotationY *= rotationToAdd;
     }
@@ -89,11 +102,7 @@ public class DominoPlacement : MonoBehaviour
         if (Physics.Raycast(ray, out hit, 100f, GroundLayer))
         {
             Vector3 placementPosition = hit.point + hit.normal * PlacementOffset;
-            
-            // 地面の傾斜に合わせる
             Quaternion groundTilt = Quaternion.FromToRotation(Vector3.up, hit.normal);
-            
-            // 最終回転 = 地面の傾斜 * プレイヤーのひねり回転
             Quaternion finalRotation = groundTilt * _currentRotationY;
 
             if (_currentPreview != null)
@@ -118,15 +127,27 @@ public class DominoPlacement : MonoBehaviour
             Instantiate(DominoPrefab, _currentPreview.transform.position, _currentPreview.transform.rotation);
         }
         _isHolding = false;
-        // 回転は維持するか、リセットするか？（ここでは維持する仕様）
     }
 
-    // ... (SetPlacementModeActiveなどは前と同じ) ...
     public void SetPlacementModeActive(bool isActive)
     {
-        if (isActive) { _controls.Building.Enable(); this.enabled = true; }
-        else { _controls.Building.Disable(); this.enabled = false; _isHolding = false; if(_currentPreview) _currentPreview.SetActive(false); }
+        // ★修正: _controls の有効無効化処理を削除
+        this.enabled = isActive;
+        
+        if (!isActive)
+        {
+             _isHolding = false;
+             if(_currentPreview) _currentPreview.SetActive(false);
+        }
     }
-    private void OnDisable() { _controls?.Building.Disable(); }
-    private void OnDestroy() { _controls?.Dispose(); }
+
+    // ThirdPersonController から毎フレーム呼ばれる
+    public void UpdatePlacementInput(bool isPressed, Vector2 delta)
+    {
+        if (enabled) 
+        {
+            _inputPlaceButton = isPressed; // ボタンの状態を更新
+            _mouseDelta = delta;           // マウスの動きを更新
+        }
+    }
 }
