@@ -17,8 +17,9 @@ namespace StarterAssets
     {
         public enum PlayerState
         {
-            Standing, // 立ち（通常移動、TPS）
-            Building  // 設置モード（四つん這い、FPS、移動不可）
+            Standing,
+            CrawlingIdle, // 四つん這い・静止（設置モード）
+            CrawlingMove  // 四つん這い・移動（ハイハイ）
         }
         [Header("State")]
         public PlayerState CurrentState = PlayerState.Standing;
@@ -29,6 +30,10 @@ namespace StarterAssets
 
         [Tooltip("Sprint speed of the character in m/s")]
         public float SprintSpeed = 5.335f;
+
+        [Header("Crawling")]
+        [Tooltip("四つん這い（Crawling）時の移動速度")]
+        public float CrawlSpeed = 1.2f;
 
         [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
@@ -123,6 +128,8 @@ namespace StarterAssets
         private int _animIDMotionSpeed;
         private int _animIDIsBuilding;
 
+        private int _animIDIdCrawling;
+
         private DominoTrigger[] handFootTriggers;  // 手足のDominoTriggerコンポーネントを保持する配列
 
 
@@ -198,7 +205,7 @@ namespace StarterAssets
             }
 
             // 2. Buildingモードのときだけ、入力値をDominoPlacementに渡す
-            if (CurrentState == PlayerState.Building && dominoPlacementManager != null)
+            if (CurrentState == PlayerState.CrawlingIdle && dominoPlacementManager != null)
             {
                 dominoPlacementManager.UpdatePlacementInput(_placeDomino, _mouseDelta);
             }
@@ -217,6 +224,7 @@ namespace StarterAssets
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
             _animIDIsBuilding = Animator.StringToHash("IsBuilding"); // 設置/四つん這い兼用
+            _animIDIdCrawling = Animator.StringToHash("IsCrawling"); // 四つん這い移動専用
         }
 
         private void GroundedCheck()
@@ -263,123 +271,97 @@ namespace StarterAssets
             _placeDomino = value.isPressed;
         }
         private void Move()
-        {
-            // --- 1. 設置モード (Building) チェックと移動制限 ---
-            if (CurrentState == PlayerState.Building)
-            {
-                // 移動停止のための処理
-                _speed = 0f;
-                _animationBlend = 0f;
-                if (_hasAnimator)
-                {
-                    _animator.SetFloat(_animIDSpeed, 0f);
-                    _animator.SetFloat(_animIDMotionSpeed, 0f);
-                }
-                // キャラクターコントローラーを動かさない (重力はJumpAndGravityで処理される)
-                return; 
-            }
-            // --- ------------------------------------------ ---
-            
-            // --- 2. Standingモード (TPS) の移動ロジック (既存のロジック) ---
-            
-            // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed; 
-            
-            // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+        {
+            // --- 1. 速度の決定（以前のロジックを維持） ---
+            float targetSpeed = 0f;
+            bool isCrawling = CurrentState != PlayerState.Standing;
 
-            // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
-
-            // a reference to the players current horizontal velocity
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-
-            float speedOffset = 0.1f;
-            float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
-
-            // accelerate or decelerate to target speed
-            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                currentHorizontalSpeed > targetSpeed + speedOffset)
-            {
-                // creates curved result rather than a linear one giving a more organic speed change
-                // note T in Lerp is clamped, so we don't need to clamp our speed
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-                    Time.deltaTime * SpeedChangeRate);
-
-                // round speed to 3 decimal places
-                _speed = Mathf.Round(_speed * 1000f) / 1000f;
-            }
-            else
-            {
-                _speed = targetSpeed;
-            }
-
-            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
-            if (_animationBlend < 0.01f) _animationBlend = 0f;
-            
-            // normalise input direction
-            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
-
-            // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is a move input rotate player when the player is moving
-            if (_input.move != Vector2.zero)
-            {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                        _mainCamera.transform.eulerAngles.y;
-                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                    RotationSmoothTime);
-
-                // rotate to face input direction relative to camera position
-                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-            }
-
-
-            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-
-            // ***** ここから修正箇所 *****
-            Vector3 horizontalMovement = targetDirection.normalized * (_speed * Time.deltaTime);
-
-            // 壁登りバグ（高く飛ぶ問題）の対策：
-            // 地面にいる（Grounded）状態でジャンプ入力がある（_input.jump）場合、
-            // 水平方向の移動（horizontalMovement）を強制的にゼロにし、
-            // 壁との摩擦・衝突による意図しない垂直速度のブーストを防ぐ
-            if (Grounded && _input.jump) 
+            if (!isCrawling)
             {
-                horizontalMovement = Vector3.zero;
+                targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+                if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            }
+            else
+            {
+                targetSpeed = (_input.move == Vector2.zero) ? 0.0f : CrawlSpeed;
+                CurrentState = (_input.move == Vector2.zero) ? PlayerState.CrawlingIdle : PlayerState.CrawlingMove;
             }
 
-            // move the player
-            _controller.Move(horizontalMovement +
-                                    new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
-            // ***** ここまで修正箇所 *****
+            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            float speedOffset = 0.1f;
+            float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
 
-            // update animator if using character
-            if (_hasAnimator)
-            {
-                _animator.SetFloat(_animIDSpeed, _animationBlend);
-                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
-            }
-        }
+            if (currentHorizontalSpeed < targetSpeed - speedOffset || currentHorizontalSpeed > targetSpeed + speedOffset)
+            {
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude, Time.deltaTime * SpeedChangeRate);
+                _speed = Mathf.Round(_speed * 1000f) / 1000f;
+            }
+            else
+            {
+                _speed = targetSpeed;
+            }
+
+            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
+            if (_animationBlend < 0.01f) _animationBlend = 0f;
+
+            // --- 2. 【重要】回転と移動方向の計算の切り分け ---
+            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+            Vector3 movement = Vector3.zero;
+
+            if (isCrawling)
+            {
+                // --- 四つん這い時：ストレイフ挙動（カニ歩き） ---
+                // キャラクターの向きを、常にカメラの水平な向き（Yaw）に固定する
+                _targetRotation = _mainCamera.transform.eulerAngles.y;
+                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
+                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+
+                // 入力(WASD)をカメラの向きに基づいたワールド座標の移動量に変換
+                movement = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * inputDirection;
+            }
+            else
+            {
+                // --- 通常時：進行方向にキャラクターが回転する挙動 ---
+                if (_input.move != Vector2.zero)
+                {
+                    _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + _mainCamera.transform.eulerAngles.y;
+                    float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
+                    transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+                }
+                movement = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+            }
+
+            // 移動の実行（重力分を含む）
+            if (Grounded && _input.jump) movement = Vector3.zero; // 壁登り対策
+            _controller.Move(movement.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+
+            // --- 3. アニメーターへの反映 ---
+            if (_hasAnimator)
+            {
+                _animator.SetFloat(_animIDSpeed, _animationBlend);
+                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+                _animator.SetBool(_animIDIsBuilding, isCrawling);
+                _animator.SetBool(_animIDIdCrawling, CurrentState == PlayerState.CrawlingMove);
+            }
+        }
         private void HandleInputState()
-        {
-            // Eキー (BuildMode): 設置モード ⇔ 移動モード のトグル切り替え
-            if (_input.buildMode)
-            {
-                _input.buildMode = false; // 入力フラグを消費（リセット）
-                
-                // 状態をトグル切り替え
-                if (CurrentState == PlayerState.Building)
-                {
-                    CurrentState = PlayerState.Standing;
-                    UpdateState(); // ★ 状態更新関数を呼び出し ★
-                }
-                else if (Grounded) 
-                {
-                    CurrentState = PlayerState.Building;
-                    UpdateState(); // ★ 状態更新関数を呼び出し ★
-                }
-            }
-        }
+        {
+            if (_input.buildMode)
+            {
+                _input.buildMode = false;
+                
+                // Eキーで Standing ⇔ CrawlingIdle を切り替える
+                if (CurrentState == PlayerState.Standing)
+                {
+                    if (Grounded) CurrentState = PlayerState.CrawlingIdle;
+                }
+                else
+                {
+                    CurrentState = PlayerState.Standing;
+                }
+                UpdateState();
+            }
+        }
         private void JumpAndGravity()
         {
             if (Grounded)
@@ -516,49 +498,26 @@ namespace StarterAssets
         // --- 状態更新時の処理（カメラとアニメ） ---
         private void UpdateState()
         {
-            bool isBuilding = CurrentState == PlayerState.Building;
-            // カメラの優先度切り替え（方針A）
-            if (CurrentState == PlayerState.Building)
-            {
-                // FPSカメラを有効化
-                FPSCamera.Priority = 20;
-                TPSCamera.Priority = 10;
-                
-                // 設置モードに入ったときに、CharacterControllerのColliderを調整しても良い
-                // _controller.height = 1.0f; // 例: 高さを低くする
-            }
-            else
-            {
-                // TPSカメラを有効化
-                FPSCamera.Priority = 10;
-                TPSCamera.Priority = 20;
+            // 四つん這い系（Idle or Move）かどうかの判定
+            bool isAnyCrawl = CurrentState == PlayerState.CrawlingIdle || CurrentState == PlayerState.CrawlingMove;
 
-                // _controller.height = 2.0f; // 例: 高さを戻す
-            }
+            // カメラ切り替え
+            FPSCamera.Priority = isAnyCrawl ? 20 : 10;
+            TPSCamera.Priority = isAnyCrawl ? 10 : 20;
 
-            // DominoPlacement の有効/無効化
+            // ドミノ設置許可
             if (dominoPlacementManager != null)
             {
-                dominoPlacementManager.SetPlacementModeActive(isBuilding);
+                dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
             }
-            // ***** 追加箇所：ドミノトリガーの有効/無効化 *****
+
+            // 手足のドミノ衝突判定（ハイハイ移動中も有効）
             if (handFootTriggers != null)
             {
                 foreach (var trigger in handFootTriggers)
                 {
-                    // Building モードのときだけ、ドミノを倒す機能を有効にする（isBuildingの値をそのまま渡す）
-                    trigger.IsActive = isBuilding;
-
-                    // コライダー自体を有効/無効にしたい場合は以下も実行
-                    // trigger.gameObject.SetActive(isBuilding); 
+                    trigger.IsActive = isAnyCrawl;
                 }
-            }
-
-            // アニメーターへの通知（四つん這い=Buildingとして扱う）
-            if (_hasAnimator)
-            {
-                // IsBuildingがtrueの時、Animatorで四つん這いのアニメーションに遷移させる
-                _animator.SetBool(_animIDIsBuilding, CurrentState == PlayerState.Building);
             }
         }
     }
