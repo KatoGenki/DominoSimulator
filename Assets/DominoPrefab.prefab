@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7865260690722466389}
   - component: {fileID: 4492438386423290674}
   - component: {fileID: 4882945918912112350}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DominoPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
