@@ -62,7 +62,7 @@ public class DominoPlacement : MonoBehaviour
         if (selectedSlot == -1) return; // 何も選んでなければ何もしない
         // ★ガードを追加：hudManager がセットされていない場合はエラーを防ぐ
         if (hudManager == null) return;
-
+        //Debug.Log("地面に");
         // 2. 入力に対する処理
         if (isPressed && !_inputPlaceButton) {
             StartHolding();
@@ -86,7 +86,7 @@ public class DominoPlacement : MonoBehaviour
 
         // ★追加：Sceneビューで視線を赤い線で表示（10メートルの長さ）
         Debug.DrawRay(ray.origin, ray.direction * 10f, Color.red, 2.0f);
-
+        //Debug.Log("地面" );
         if (Physics.Raycast(ray, out RaycastHit hit, 10f, groundLayer))
         {
             Debug.Log("地面にヒットしました: " + hit.collider.name); // ★追加：ヒット確認ログ

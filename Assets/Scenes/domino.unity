@@ -1642,7 +1642,7 @@ MonoBehaviour:
   LockCameraPosition: 0
   TPSCamera: {fileID: 583943574}
   FPSCamera: {fileID: 1215763207}
-  dominoPlacementManager: {fileID: 0}
+  dominoPlacementManager: {fileID: 668434784}
 --- !u!143 &668434780
 CharacterController:
   m_ObjectHideFlags: 0
