@@ -1,5 +1,6 @@
 using UnityEngine;
 using StarterAssets;
+using UnityEngine.InputSystem;
 
 public class DominoPlacement : MonoBehaviour
 {
@@ -11,6 +12,9 @@ public class DominoPlacement : MonoBehaviour
     [Header("設定")]
     public float placementOffset = 0.5f;
     public float rotationSensitivity = 2.0f;
+
+    [Header("緊張感演出")]
+    public float shakeIntensity = 0.05f; // ドミノの震えの強さ
 
     private GameObject _heldDomino; // 現在ホールド中のドミノ実体
     private bool _isHolding = false;
@@ -52,6 +56,8 @@ public class DominoPlacement : MonoBehaviour
 
     public void UpdatePlacementInput(bool isPressed, Vector2 delta)
     {
+
+        Debug.Log($"UpdatePlacementInput 呼び出し中: 押下={isPressed}, 選択スロット={HUDManager.Instance.GetSelectedSlotIndex()}");
         _mouseDelta = delta;
 
         // ★修正：インスペクターの変数ではなく、直接 Instance を見に行く
@@ -65,6 +71,7 @@ public class DominoPlacement : MonoBehaviour
         //Debug.Log("地面に");
         // 2. 入力に対する処理
         if (isPressed && !_inputPlaceButton) {
+            Debug.Log("StartHoldingを実行します"); // ★追加
             StartHolding();
         } else if (!isPressed && _inputPlaceButton) {
             ReleaseDomino();
@@ -82,42 +89,45 @@ public class DominoPlacement : MonoBehaviour
 
     private void StartHolding()
     {
-        Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         // ★追加：Sceneビューで視線を赤い線で表示（10メートルの長さ）
         Debug.DrawRay(ray.origin, ray.direction * 10f, Color.red, 2.0f);
         //Debug.Log("地面" );
-        if (Physics.Raycast(ray, out RaycastHit hit, 10f, groundLayer))
+    if (Physics.Raycast(ray, out RaycastHit hit, 10f, groundLayer))
         {
-            Debug.Log("地面にヒットしました: " + hit.collider.name); // ★追加：ヒット確認ログ
-
-            _heldDomino = Instantiate(dominoPrefab, hit.point + hit.normal * placementOffset, _currentRotationY);
+            _isHolding = true;
+            _heldDomino = Instantiate(dominoPrefab, hit.point, _currentRotationY);
             
-            // 物理演算を一時的に無効化（空中に固定するため）
+            // ★修正：子オブジェクトも含めて全てのレイヤーを Ignore Raycast に変更
+            SetLayerRecursive(_heldDomino, LayerMask.NameToLayer("Ignore Raycast"));
+
             Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
+        }
 
-            _isHolding = true;
-        }
-        else
-        {
-            Debug.Log("地面にヒットしませんでした。"); // ★追加：ヒットしなかった場合のログ
-        }
     }
+
     private void UpdateHeldDomino()
     {
         if (_heldDomino == null) return;
 
-        // 1. 円運動による回転
-        float angleChange = Vector2.SignedAngle(Vector2.up, _mouseDelta); // 簡易的な円運動検知
-        // ※実際には前フレームのdeltaとの比較ロジックを入れるとより精密になります
-        _currentRotationY *= Quaternion.Euler(0, _mouseDelta.x * rotationSensitivity, 0);
+        // ★修正：画面中央(0.5, 0.5)ではなく、現在のマウス位置からRayを飛ばす
+        Vector2 mousePos = Mouse.current.position.ReadValue();
+        Ray ray = Camera.main.ScreenPointToRay(mousePos);
 
-        // 2. 位置の更新（常にカメラの中央付近の地面に追従）
-        Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
-        if (Physics.Raycast(ray, out RaycastHit hit, 10f, groundLayer))
+        // ★追加：ホールド中もRayをSceneビューに表示（デバッグ用）
+        Debug.DrawRay(ray.origin, ray.direction * 50f, Color.green);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, 50f, groundLayer))
         {
-            _heldDomino.transform.position = hit.point + hit.normal * placementOffset;
+            // 震えを足す
+            Vector3 shake = Random.insideUnitSphere * shakeIntensity;
+            
+            // ヒットした地面の場所にドミノを移動
+            _heldDomino.transform.position = hit.point + (hit.normal * placementOffset) + shake;
+            
+            // 地面の傾きに合わせつつ、現在の回転(Y)を適用
             _heldDomino.transform.rotation = Quaternion.FromToRotation(Vector3.up, hit.normal) * _currentRotationY;
         }
     }
@@ -126,6 +136,8 @@ public class DominoPlacement : MonoBehaviour
     {
         if (_heldDomino != null)
         {
+            // ★修正：設置時は全てのパーツを Default（または元のレイヤー）に戻す
+            SetLayerRecursive(_heldDomino, LayerMask.NameToLayer("Default"));
             // 物理演算を再開
             Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = false;
@@ -137,27 +149,43 @@ public class DominoPlacement : MonoBehaviour
         _heldDomino = null;
     }
 
-    // DominoPlacement.cs に以下のメソッドを上書き、または追加してください
+    // ★追加：親子構造をすべて辿ってレイヤーを変えるヘルパーメソッド
+    private void SetLayerRecursive(GameObject obj, int newLayer)
+    {
+        if (obj == null) return;
+        obj.layer = newLayer;
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursive(child.gameObject, newLayer);
+        }
+    }
 
     // ThirdPersonController の UpdateState() から呼ばれる
+    // DominoPlacement.cs 内
+
     public void SetPlacementModeActive(bool isActive)
     {
-        // 1. スクリプト自体の動作を切り替え
         this.enabled = isActive;
 
-        // 2. もし非アクティブ（立ち状態）になったら、ホールド中のドミノをクリーンアップ
+        // ★追加：マウスカーソルのロック・表示設定
+        if (isActive)
+        {
+            Cursor.lockState = CursorLockMode.None; // ロック解除
+            Cursor.visible = true;                // カーソルを表示
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked; // 再ロック（通常時）
+            Cursor.visible = false;                   // 非表示
+        }
+
         if (!isActive)
         {
-            if (_heldDomino != null)
-            {
-                Destroy(_heldDomino); 
-            }
+            if (_heldDomino != null) Destroy(_heldDomino);
             _isHolding = false;
             _heldDomino = null;
         }
 
-        // 3. HUD（手アイコン）の表示切り替え
-        // これにより「一人称（isAnyCrawl）の時だけ手が出る」が実現します
         if (hudManager != null)
         {
             hudManager.SetHandIconVisible(isActive);

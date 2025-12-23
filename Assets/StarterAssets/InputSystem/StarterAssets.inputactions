@@ -58,16 +58,16 @@
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
-                    "initialStateCheck": false
+                    "initialStateCheck": true
                 },
                 {
                     "name": "PlaceDomino",
-                    "type": "Button",
+                    "type": "Value",
                     "id": "d0b452ba-1564-4802-929b-166110a8fb6f",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
-                    "initialStateCheck": false
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -266,17 +266,6 @@
                     "processors": "",
                     "groups": ";Gamepad",
                     "action": "BuildMode",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "e1441a3a-d81e-4355-b01d-30b1caf2a3b3",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";KeyboardMouse",
-                    "action": "Place",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

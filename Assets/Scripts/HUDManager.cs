@@ -18,6 +18,8 @@ public class HUDManager : MonoBehaviour
 
     private Vector3 _originalHandPos;
 
+    private Vector3 _targetHandPos;
+
     void Awake() 
     {
         if (handIcon != null) _originalHandPos = handIcon.rectTransform.localPosition;
@@ -107,18 +109,26 @@ public class HUDManager : MonoBehaviour
     public int GetSelectedSlotIndex() => _hasSelectedOnce ? _currentSelectedIndex : -1;
 
     // DominoPlacementから毎フレーム呼ばれる
-    public void UpdateHandShake(bool isHolding) {
+    public void UpdateHandShake(bool isHolding) 
+    {
         if (handIcon == null || !handIcon.gameObject.activeSelf) return;
 
-        if (isHolding) {
-            // 緊張感のあるプルプル（ランダムな微振動）
-            float shakeAmount = 5.0f; 
-            handIcon.rectTransform.localPosition = _originalHandPos + new Vector3(
-                Random.Range(-shakeAmount, shakeAmount),
-                Random.Range(-shakeAmount, shakeAmount),
+        if (isHolding) 
+        {
+            // ★演出：ホールド中はアイコンを少し中央（左上方向）へ寄せる
+            Vector3 offsetToCenter = new Vector3(-150f, 100f, 0f); 
+            _targetHandPos = _originalHandPos + offsetToCenter;
+
+            float uiShake = 10.0f; 
+            handIcon.rectTransform.localPosition = _targetHandPos + new Vector3(
+                Random.Range(-uiShake, uiShake),
+                Random.Range(-uiShake, uiShake),
                 0
             );
-        } else {
+        } 
+        else 
+        {
+            // 離したら元の位置（右端）へ戻す
             handIcon.rectTransform.localPosition = _originalHandPos;
         }
     }

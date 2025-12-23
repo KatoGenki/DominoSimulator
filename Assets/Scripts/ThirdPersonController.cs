@@ -244,6 +244,8 @@ namespace StarterAssets
 
         private void CameraRotation()
         {
+            // ★ドミノ設置マネージャーが有効なら、カメラ回転をスキップする
+            if (dominoPlacementManager != null && dominoPlacementManager.enabled) return;
             // if there is an input and camera position is not fixed
             if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
             {
