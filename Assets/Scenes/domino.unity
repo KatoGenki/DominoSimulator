@@ -849,7 +849,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DominoTrigger
   ForceMagnitude: 5000
   IsActive: 0
-  _pushPower: 0.5
+  _pushPower: 3
   _upwardOffset: 0.1
   DominoLayer:
     serializedVersion: 2
@@ -1689,6 +1689,7 @@ MonoBehaviour:
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
+  rotateMode: 0
 --- !u!114 &668434778
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1862,7 +1863,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   placementOffset: 0.5
-  rotationSensitivity: 2
+  rotationSensitivity: 20
+  minMouseSpeed: 0.5
   shakeIntensity: 0.05
 --- !u!1 &670349436
 GameObject:
@@ -5057,7 +5059,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DominoTrigger
   ForceMagnitude: 5000
   IsActive: 0
-  _pushPower: 0.5
+  _pushPower: 3
   _upwardOffset: 0.1
   DominoLayer:
     serializedVersion: 2

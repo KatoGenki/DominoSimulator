@@ -97,6 +97,15 @@ namespace StarterAssets
 		{
 			Cursor.lockState = newState ? CursorLockMode.Locked : CursorLockMode.None;
 		}
+		public bool rotateMode; // 右クリックの状態
+
+		#if ENABLE_INPUT_SYSTEM
+		public void OnRotateMode(InputValue value)
+		{
+			rotateMode = value.isPressed;
+		}
+		#endif
 	}
+	
 	
 }

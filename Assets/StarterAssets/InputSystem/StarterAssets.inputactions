@@ -68,6 +68,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "RotateMode",
+                    "type": "Button",
+                    "id": "ccc6746b-3eff-4a54-86af-2413a829b85c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -288,6 +297,28 @@
                     "processors": "",
                     "groups": ";KeyboardMouse",
                     "action": "PlaceDomino",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "92c05d21-6910-43b5-aac4-d043472e1ef9",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotateMode",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8e7aa3b0-d8fe-4fa8-935b-ded9d6e642a5",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";KeyboardMouse",
+                    "action": "RotateMode",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
