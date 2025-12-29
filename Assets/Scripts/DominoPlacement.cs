@@ -91,19 +91,23 @@ public class DominoPlacement : MonoBehaviour
 
     private void StartHolding()
     {
-        // HUDでスロットが選択されているかチェック
-        if (HUDManager.Instance.GetSelectedSlotIndex() == -1) return;
+        // HUDから選択中のドミノデータを取得
+        DominoData selectedData = HUDManager.Instance.GetSelectedDominoData();
+
+        // データがない、または残量が0なら置けない
+        if (selectedData == null || selectedData.currentCount <= 0) return;
 
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        
         if (Physics.Raycast(ray, out RaycastHit hit, 10f, groundLayer))
         {
             _isHolding = true;
-            _heldDomino = Instantiate(dominoPrefab, hit.point, _currentRotationY);
+            // 選択されたデータのプレファブを生成
+            _heldDomino = Instantiate(selectedData.prefab, hit.point, _currentRotationY);
             
-            // レイキャストが自分に当たらないようにレイヤー変更
-            SetLayerRecursive(_heldDomino, LayerMask.NameToLayer("Ignore Raycast"));
+            // 残量を減らす
+            HUDManager.Instance.UseSelectedDomino();
 
+            SetLayerRecursive(_heldDomino, LayerMask.NameToLayer("Ignore Raycast"));
             Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
         }
