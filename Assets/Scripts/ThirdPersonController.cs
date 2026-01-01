@@ -130,6 +130,9 @@ namespace StarterAssets
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
             handFootTriggers = GetComponentsInChildren<DominoTrigger>(true);
+
+            // 最初から全てのトリガーを起動しておく
+            foreach (var trigger in handFootTriggers) trigger.IsActive = true;
         }
 
         private void Update()
@@ -346,13 +349,22 @@ namespace StarterAssets
         private void UpdateState()
         {
             bool isAnyCrawl = (CurrentState != PlayerState.Standing);
+            
+            // カメラの切り替え
             FPSCamera.Priority = isAnyCrawl ? 20 : 10;
             TPSCamera.Priority = isAnyCrawl ? 10 : 20;
 
-            if (dominoPlacementManager != null) dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
+            // 設置モードの有効化（これはハイハイ時のみで良いはずです）
+            if (dominoPlacementManager != null) 
+                dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
+
+            // ★修正箇所：状態に関わらず常にトリガーを有効にする
             if (handFootTriggers != null)
             {
-                foreach (var trigger in handFootTriggers) trigger.IsActive = isAnyCrawl;
+                foreach (var trigger in handFootTriggers) 
+                {
+                    trigger.IsActive = true; // 常時 true に設定
+                }
             }
         }
 
@@ -372,6 +384,11 @@ namespace StarterAssets
             {
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
+        }
+        
+        public void ForceUpdateState()
+        {
+            UpdateState();
         }
     }
 }

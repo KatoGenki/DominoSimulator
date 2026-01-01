@@ -1,4 +1,5 @@
 using UnityEngine;
+using StarterAssets;
 
 public class ScoreManager : MonoBehaviour
 {
@@ -28,6 +29,12 @@ public class ScoreManager : MonoBehaviour
     /// <param name="height">倒れた瞬間の高さ</param>
     public void AddScore(int basePoint, float height)
     {
+        // GameManagerの状態がReady（またはリザルト中）の時のみ加点する
+        if (GameManager.Instance == null || GameManager.Instance.currentState == GameManager.GameState.Build)
+        {
+            return; 
+        }
+
         chainCount++;
 
         // 【計算式】 1.0(基本) + (連鎖数ボーナス) + (高さボーナス)
@@ -49,6 +56,10 @@ public class ScoreManager : MonoBehaviour
         Debug.Log($"[Score] {name} 倒れた! +{addValue}pt (連鎖倍率:+{currentChainBonus} / 高さ倍率:+{currentHeightBonus})");
     }
 
+    public int GetCurrentScore()
+    {
+        return totalScore;
+    }
     public void ResetChain()
     {
         chainCount = 0;

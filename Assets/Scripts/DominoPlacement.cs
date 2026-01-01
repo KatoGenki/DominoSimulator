@@ -137,13 +137,19 @@ public class DominoPlacement : MonoBehaviour
     {
         if (_heldDomino != null)
         {
-            // レイヤーを戻して物理演算を有効化
-            SetLayerRecursive(_heldDomino, LayerMask.NameToLayer("Default"));
+            // 【修正箇所】"Default" を "Domino" に変更
+            // これにより、配置後はプレイヤーとの衝突設定（すり抜け）が適用されるレイヤーになります
+            int dominoLayer = LayerMask.NameToLayer("DominoLayer");
+            
+            // もしレイヤー名 "Domino" を作成していない場合は、ここをプレハブのレイヤーに合わせる
+            // SetLayerRecursive(_heldDomino, dominoPrefab.layer); 
+            
+            SetLayerRecursive(_heldDomino, dominoLayer);
             
             Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = false;
 
-            Debug.Log("Domino Released!");
+            Debug.Log("Domino Released to Domino Layer!");
         }
         _isHolding = false;
         _heldDomino = null;
@@ -195,4 +201,6 @@ public class DominoPlacement : MonoBehaviour
             hudManager.SetHandIconVisible(isActive);
         }
     }
+
+    
 }

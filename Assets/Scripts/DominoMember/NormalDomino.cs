@@ -1,4 +1,5 @@
 using UnityEngine;
+using StarterAssets;
 
 public class NormalDomino : MonoBehaviour
 {
@@ -27,6 +28,12 @@ public class NormalDomino : MonoBehaviour
         if (ScoreManager.Instance != null)
         {
             ScoreManager.Instance.AddScore(_scorePoint, height);
+        }
+
+        // ★追加：GameManagerに「今倒れて動いているドミノ」として登録する
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterActiveDomino(this);
         }
     }
 }
