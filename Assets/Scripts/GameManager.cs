@@ -44,6 +44,12 @@ namespace StarterAssets
         [Header("Cinemachine Settings")]
         [SerializeField] private Cinemachine.CinemachineTargetGroup _targetGroup;
 
+        [Header("Extra Camera Settings")]
+        [SerializeField] private Cinemachine.CinemachineVirtualCamera _resultCamera;
+
+        [Header("Wipe Settings")]
+        [SerializeField] private GameObject _wipeUI;
+
         public List<NormalDomino> ActiveDominoes => _activeDominoes;
 
         private void Awake()
@@ -202,6 +208,32 @@ namespace StarterAssets
             {
                 OnChainFinished();
             }
+        }
+
+    public void UpdateCameraTarget(Transform newTarget)
+    {
+        if (_targetGroup != null)
+        {
+            // 既存のターゲットを一旦すべて削除（または0番目を差し替え）
+            while (_targetGroup.m_Targets.Length > 0)
+            {
+                _targetGroup.RemoveMember(_targetGroup.m_Targets[0].target);
+            }
+
+            // 新しく倒れたドミノを注視対象として追加
+            _targetGroup.AddMember(newTarget, 1f, 0f);
+        }
+    }
+        public void SwitchToResultCamera()
+        {
+            if (_resultCamera != null)
+            {
+                // プレイヤーのTPS/FPSカメラ(Priority 20)より高く設定して強制的に切り替える
+                _resultCamera.Priority = 30;
+            }
+
+            // 連鎖開始時にワイプを表示
+            if (_wipeUI != null) _wipeUI.SetActive(true);
         }
 
         private void OnChainFinished()

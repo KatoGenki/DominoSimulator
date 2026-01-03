@@ -19,6 +19,7 @@ public class HUDManager : MonoBehaviour
     public static HUDManager Instance { get; private set; }
 
     [Header("ホットバー設定")]
+    public Image hotbarBackground;
     public RectTransform selector;
     public List<RectTransform> slots; // 既存の枠リスト
     public Image handIcon;
@@ -168,6 +169,36 @@ public class HUDManager : MonoBehaviour
     public void SetTargetScoreUI(int target)
     {
         if (targetScoreText != null) targetScoreText.text = $"TARGET: {target:N0}";
+    }
+
+    public void OnChainStartedUI()
+    {
+        // 1. 選択枠（セレクター）を非表示にする
+        if (selector != null) selector.gameObject.SetActive(false);
+
+        // 2. ホットバーを非表示にする
+        if (slots != null)
+        {
+            foreach (var slot in slots)
+            {
+                if (slot != null) slot.gameObject.SetActive(false);
+            }
+        }
+        
+        if(hotbarBackground != null) hotbarBackground.gameObject.SetActive(false);
+
+        // 3. 手のアイコン（設置用）を非表示にする
+        if (handIcon != null) handIcon.gameObject.SetActive(false);
+
+
+        // 4. チェーンテキストに開始の合図を出す（演出用）
+        if (chainText != null)
+        {
+            chainText.text = "START CHAIN!";
+            chainText.color = Color.yellow; // 目立つ色に変更
+        }
+
+        Debug.Log("HUDManager: 連鎖開始UIへ切り替えました。");
     }
 
     // --- 以下、既存のメソッドを維持 ---

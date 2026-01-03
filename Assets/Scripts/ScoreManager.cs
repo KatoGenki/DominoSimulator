@@ -27,7 +27,7 @@ public class ScoreManager : MonoBehaviour
     /// </summary>
     /// <param name="basePoint">ドミノ固有のポイント</param>
     /// <param name="height">倒れた瞬間の高さ</param>
-    public void AddScore(int basePoint, float height)
+    public void AddScore(int basePoint, float height, Transform fallenDominoTransform)
     {
         // GameManagerの状態がReady（またはリザルト中）の時のみ加点する
         if (GameManager.Instance == null || GameManager.Instance.currentState == GameManager.GameState.Build)
@@ -54,6 +54,12 @@ public class ScoreManager : MonoBehaviour
         }
 
         Debug.Log($"[Score] {name} 倒れた! +{addValue}pt (連鎖倍率:+{currentChainBonus} / 高さ倍率:+{currentHeightBonus})");
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UpdateCameraTarget(fallenDominoTransform);
+        }
+
     }
 
     public int GetCurrentScore()

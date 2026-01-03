@@ -27,13 +27,13 @@ public class NormalDomino : MonoBehaviour
         // ScoreManager（後述）に通知して計算してもらう
         if (ScoreManager.Instance != null)
         {
-            ScoreManager.Instance.AddScore(_scorePoint, height);
+            ScoreManager.Instance.AddScore(_scorePoint, height, this.transform);
         }
 
-        // ★追加：GameManagerに「今倒れて動いているドミノ」として登録する
+        // 倒れた自分をカメラのターゲットにする
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.RegisterActiveDomino(this);
+            GameManager.Instance.UpdateCameraTarget(this.transform);
         }
     }
 }

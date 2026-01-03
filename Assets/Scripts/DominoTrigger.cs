@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using StarterAssets;
 public class DominoTrigger : MonoBehaviour
 {
     public float ForceMagnitude = 1.0f;
@@ -12,6 +12,22 @@ public class DominoTrigger : MonoBehaviour
     {
         if (!IsActive) return;
 
+
+        // GameManagerがReady状態のときのみ、最初の接触を検知する
+        if (GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Ready)
+        {
+            // 触れたのがドミノレイヤーであり、まだWatcherが付いていない場合
+            if (((1 << other.gameObject.layer) & DominoLayer) != 0)
+            {
+                if (other.GetComponent<StartDominoWatcher>() == null)
+                {
+                    // Watcherを動的に追加（これが「最初の一個」の判定になる）
+                    other.gameObject.AddComponent<StartDominoWatcher>();
+                    Debug.Log($"Trigger: {other.name} を連鎖開始ドミノとしてロックしました。");
+                }
+            }
+        }
+        
         // レイヤーチェック
         if (((1 << other.gameObject.layer) & DominoLayer) == 0) return;
 
