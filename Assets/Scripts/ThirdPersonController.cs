@@ -1,11 +1,8 @@
-﻿ using UnityEngine;
- using Cinemachine;
+﻿using UnityEngine;
+using Cinemachine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 #endif
-
-/* Note: animations are called via the controller for both the character and capsule using animator null checks
- */
 
 namespace StarterAssets
 {
@@ -17,104 +14,77 @@ namespace StarterAssets
     {
         public enum PlayerState
         {
-            Standing, // 立ち（通常移動、TPS）
-            Building  // 設置モード（四つん這い、FPS、移動不可）
+            Standing,
+            CrawlingIdle, // 四つん這い・静止（設置モード）
+            CrawlingMove  // 四つん這い・移動（ハイハイ）
         }
         [Header("State")]
         public PlayerState CurrentState = PlayerState.Standing;
 
         [Header("Player")]
-        [Tooltip("Move speed of the character in m/s")]
         public float MoveSpeed = 2.0f;
-
-        [Tooltip("Sprint speed of the character in m/s")]
         public float SprintSpeed = 5.335f;
 
-        [Tooltip("How fast the character turns to face movement direction")]
+        [Header("Crawling")]
+        public float CrawlSpeed = 1.2f;
+
         [Range(0.0f, 0.3f)]
         public float RotationSmoothTime = 0.12f;
-
-        [Tooltip("Acceleration and deceleration")]
         public float SpeedChangeRate = 10.0f;
 
         public AudioClip LandingAudioClip;
         public AudioClip[] FootstepAudioClips;
         [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
 
-        [Space(10)]
-        [Tooltip("The height the player can jump")]
         public float JumpHeight = 1.2f;
-
-        [Tooltip("The character uses its own gravity value. The engine default is -9.81f")]
         public float Gravity = -15.0f;
-
-        [Space(10)]
-        [Tooltip("Time required to pass before being able to jump again. Set to 0f to instantly jump again")]
         public float JumpTimeout = 0.50f;
-
-        [Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
         public float FallTimeout = 0.15f;
 
         [Header("Player Grounded")]
-        [Tooltip("If the character is grounded or not. Not part of the CharacterController built in grounded check")]
         public bool Grounded = true;
-
-        [Tooltip("Useful for rough ground")]
         public float GroundedOffset = -0.14f;
-
-        [Tooltip("The radius of the grounded check. Should match the radius of the CharacterController")]
         public float GroundedRadius = 0.28f;
-
-        [Tooltip("What layers the character uses as ground")]
         public LayerMask GroundLayers;
 
         [Header("Cinemachine")]
-        [Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
         public GameObject CinemachineCameraTarget;
-
-        [Tooltip("How far in degrees can you move the camera up")]
         public float TopClamp = 70.0f;
-
-        [Tooltip("How far in degrees can you move the camera down")]
         public float BottomClamp = -30.0f;
-
-        [Tooltip("Additional degress to override the camera. Useful for fine tuning camera position when locked")]
         public float CameraAngleOverride = 0.0f;
-
-        [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
         [Header("Cameras")]
-        [Tooltip("三人称視点 (TPS) 用の Cinemachine Virtual Camera")]
         public CinemachineVirtualCamera TPSCamera; 
-
-        [Tooltip("一人称視点 (FPS) 用の Cinemachine Virtual Camera")]
         public CinemachineVirtualCamera FPSCamera;
 
-        // cinemachine
+        [Header("Domino System")]
+        public DominoPlacement dominoPlacementManager;
+
+        // 内部変数
+        private bool _placeDomino = false; 
+        private Vector2 _mouseDelta = Vector2.zero;
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
 
-        // player
         private float _speed;
-        private float _animationBlend;
         private float _targetRotation = 0.0f;
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 159.0f;
 
-        // timeout deltatime
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
 
-        // animation IDs
         private int _animIDSpeed;
         private int _animIDGrounded;
         private int _animIDJump;
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
         private int _animIDIsBuilding;
+        private int _animIDIdCrawling;
 
+        private DominoTrigger[] handFootTriggers; 
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -125,7 +95,6 @@ namespace StarterAssets
         private GameObject _mainCamera;
 
         private const float _threshold = 0.01f;
-
         private bool _hasAnimator;
 
         private bool IsCurrentDeviceMouse
@@ -135,15 +104,13 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
                 return _playerInput.currentControlScheme == "KeyboardMouse";
 #else
-				return false;
+                return false;
 #endif
             }
         }
 
-
         private void Awake()
         {
-            // get a reference to our main camera
             if (_mainCamera == null)
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
@@ -153,31 +120,40 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-            
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
-#else
-			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
-
             AssignAnimationIDs();
-
-            // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
+            handFootTriggers = GetComponentsInChildren<DominoTrigger>(true);
+
+            // 最初から全てのトリガーを起動しておく
+            foreach (var trigger in handFootTriggers) trigger.IsActive = true;
         }
 
         private void Update()
         {
             _hasAnimator = TryGetComponent(out _animator);
 
-            HandleInputState(); // 状態変化処理
+            HandleInputState();
             JumpAndGravity();
             GroundedCheck();
             Move();
+
+            // マウスの移動量を更新
+            if (_input != null) _mouseDelta = _input.look;
+
+            // 建築モード（Crawling）の時のみドミノ操作を実行
+            bool isBuildingMode = (CurrentState != PlayerState.Standing);
+            if (isBuildingMode && dominoPlacementManager != null)
+            {
+                // 左クリックホールド(_placeDomino)中に移動と回転の両方を渡す
+                dominoPlacementManager.UpdatePlacementInput(_placeDomino, _mouseDelta);
+            }
         }
 
         private void LateUpdate()
@@ -192,320 +168,162 @@ namespace StarterAssets
             _animIDJump = Animator.StringToHash("Jump");
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
-            _animIDIsBuilding = Animator.StringToHash("IsBuilding"); // 設置/四つん這い兼用
+            _animIDIsBuilding = Animator.StringToHash("IsBuilding"); 
+            _animIDIdCrawling = Animator.StringToHash("IsCrawling"); 
         }
 
         private void GroundedCheck()
         {
-            // set sphere position, with offset
-            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset,
-                transform.position.z);
-            Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
-                QueryTriggerInteraction.Ignore);
+            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z);
+            Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers, QueryTriggerInteraction.Ignore);
 
-            // update animator if using character
-            if (_hasAnimator)
-            {
-                _animator.SetBool(_animIDGrounded, Grounded);
-            }
+            if (_hasAnimator) _animator.SetBool(_animIDGrounded, Grounded);
         }
 
         private void CameraRotation()
         {
-            // if there is an input and camera position is not fixed
-            if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
+            // 3人称視点（Standing）の時だけ、マウスでカメラ角度を更新
+            if (CurrentState == PlayerState.Standing)
             {
-                //Don't multiply mouse input by Time.deltaTime;
-                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
-
-                _cinemachineTargetYaw += _input.look.x * deltaTimeMultiplier;
-                _cinemachineTargetPitch += _input.look.y * deltaTimeMultiplier;
+                if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
+                {
+                    float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
+                    _cinemachineTargetYaw += _input.look.x * deltaTimeMultiplier;
+                    _cinemachineTargetPitch += _input.look.y * deltaTimeMultiplier;
+                }
             }
 
-            // clamp our rotations so our values are limited 360 degrees
             _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
             _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
-            // Cinemachine will follow this target
-            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride,
-                _cinemachineTargetYaw, 0.0f);
+            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(
+                _cinemachineTargetPitch + CameraAngleOverride,
+                _cinemachineTargetYaw, 
+                0.0f
+            );
         }
 
-        // ThirdPersonController.cs の Move関数全体を以下に置き換えてください
+        public void OnPlaceDomino(InputValue value)
+        {
+            _placeDomino = value.isPressed;
+        }
 
-        // private void Move()
-        // {
-        //     // --- 1. 設置モード (Building) チェックと移動制限 ---
-        //     if (CurrentState == PlayerState.Building)
-        //     {
-        //         // 移動停止のための処理
-        //         _speed = 0f;
-        //         _animationBlend = 0f;
-        //         if (_hasAnimator)
-        //         {
-        //             _animator.SetFloat(_animIDSpeed, 0f);
-        //             _animator.SetFloat(_animIDMotionSpeed, 0f);
-        //         }
-        //         // キャラクターコントローラーを動かさない (重力はJumpAndGravityで処理される)
-        //         return; 
-        //     }
-        //     // --- ------------------------------------------ ---
-            
-        //     // --- 2. Standingモード (TPS) の移動ロジック (既存のロジック) ---
-            
-        //     // set target speed based on move speed, sprint speed and if sprint is pressed
-        //     float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed; // 1回目の定義は削除されている
-            
-        //     // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
-
-        //     // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-        //     // if there is no input, set the target speed to 0
-        //     if (_input.move == Vector2.zero) targetSpeed = 0.0f;
-
-        //     // a reference to the players current horizontal velocity
-        //     float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-
-        //     float speedOffset = 0.1f;
-        //     float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
-
-        //     // accelerate or decelerate to target speed
-        //     if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-        //         currentHorizontalSpeed > targetSpeed + speedOffset)
-        //     {
-        //         // creates curved result rather than a linear one giving a more organic speed change
-        //         // note T in Lerp is clamped, so we don't need to clamp our speed
-        //         _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-        //             Time.deltaTime * SpeedChangeRate);
-
-        //         // round speed to 3 decimal places
-        //         _speed = Mathf.Round(_speed * 1000f) / 1000f;
-        //     }
-        //     else
-        //     {
-        //         _speed = targetSpeed;
-        //     }
-
-        //     _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
-        //     if (_animationBlend < 0.01f) _animationBlend = 0f;
-            
-        //     // normalise input direction
-        //     Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
-
-        //     // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-        //     // if there is a move input rotate player when the player is moving
-        //     if (_input.move != Vector2.zero)
-        //     {
-        //         _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-        //                                 _mainCamera.transform.eulerAngles.y;
-        //         float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-        //             RotationSmoothTime);
-
-        //         // rotate to face input direction relative to camera position
-        //         transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-        //     }
-
-
-        //     Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-
-        //     // move the player
-        //     _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-        //                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
-
-        //     // update animator if using character
-        //     if (_hasAnimator)
-        //     {
-        //         _animator.SetFloat(_animIDSpeed, _animationBlend);
-        //         _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
-        //     }
-        // }
         private void Move()
-        {
-            // --- 1. 設置モード (Building) チェックと移動制限 ---
-            if (CurrentState == PlayerState.Building)
-            {
-                // 移動停止のための処理
-                _speed = 0f;
-                _animationBlend = 0f;
-                if (_hasAnimator)
-                {
-                    _animator.SetFloat(_animIDSpeed, 0f);
-                    _animator.SetFloat(_animIDMotionSpeed, 0f);
-                }
-                // キャラクターコントローラーを動かさない (重力はJumpAndGravityで処理される)
-                return; 
-            }
-            // --- ------------------------------------------ ---
-            
-            // --- 2. Standingモード (TPS) の移動ロジック (既存のロジック) ---
-            
-            // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed; 
-            
-            // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+        {
+            bool hasMoveInput = _input.move != Vector2.zero;
+            bool isBuildingMode = (CurrentState != PlayerState.Standing);
+            bool isSprinting = _input.sprint && !isBuildingMode;
 
-            // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
-
-            // a reference to the players current horizontal velocity
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-
-            float speedOffset = 0.1f;
-            float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
-
-            // accelerate or decelerate to target speed
-            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                currentHorizontalSpeed > targetSpeed + speedOffset)
-            {
-                // creates curved result rather than a linear one giving a more organic speed change
-                // note T in Lerp is clamped, so we don't need to clamp our speed
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-                    Time.deltaTime * SpeedChangeRate);
-
-                // round speed to 3 decimal places
-                _speed = Mathf.Round(_speed * 1000f) / 1000f;
-            }
-            else
-            {
-                _speed = targetSpeed;
-            }
-
-            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
-            if (_animationBlend < 0.01f) _animationBlend = 0f;
-            
-            // normalise input direction
-            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
-
-            // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is a move input rotate player when the player is moving
-            if (_input.move != Vector2.zero)
-            {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                        _mainCamera.transform.eulerAngles.y;
-                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                    RotationSmoothTime);
-
-                // rotate to face input direction relative to camera position
-                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-            }
-
-
-            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-
-            // ***** ここから修正箇所 *****
-            Vector3 horizontalMovement = targetDirection.normalized * (_speed * Time.deltaTime);
-
-            // 壁登りバグ（高く飛ぶ問題）の対策：
-            // 地面にいる（Grounded）状態でジャンプ入力がある（_input.jump）場合、
-            // 水平方向の移動（horizontalMovement）を強制的にゼロにし、
-            // 壁との摩擦・衝突による意図しない垂直速度のブーストを防ぐ
-            if (Grounded && _input.jump) 
+            // 1. 目標速度の決定
+            float targetSpeed = 0.0f;
+            if (hasMoveInput)
             {
-                horizontalMovement = Vector3.zero;
+                targetSpeed = isBuildingMode ? CrawlSpeed : (isSprinting ? SprintSpeed : MoveSpeed);
             }
 
-            // move the player
-            _controller.Move(horizontalMovement +
-                                    new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
-            // ***** ここまで修正箇所 *****
+            // 2. 速度の補間
+            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            float speedOffset = 0.1f;
+            if (Mathf.Abs(currentHorizontalSpeed - targetSpeed) > speedOffset)
+            {
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed, Time.deltaTime * SpeedChangeRate);
+            }
+            else
+            {
+                _speed = targetSpeed;
+            }
 
-            // update animator if using character
-            if (_hasAnimator)
-            {
-                _animator.SetFloat(_animIDSpeed, _animationBlend);
-                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
-            }
-        }
-    private void HandleInputState()
+            // 3. アニメーターへの反映
+            if (_hasAnimator)
+            {
+                _animator.SetBool(_animIDIsBuilding, isBuildingMode);
+                _animator.SetBool(_animIDIdCrawling, isBuildingMode && hasMoveInput);
+                _animator.SetFloat(_animIDSpeed, _speed);
+                _animator.SetFloat(_animIDMotionSpeed, hasMoveInput ? 1f : 0f);
+            }
+
+            // 4. 回転と移動方向
+            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+
+            if (!isBuildingMode)
+            {
+                // 3人称：移動方向に回転
+                if (hasMoveInput)
+                {
+                    _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + _mainCamera.transform.eulerAngles.y;
+                    float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
+                    transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+                }
+            }
+            else
+            {
+                // 四つん這い：カメラ正面固定
+                _targetRotation = _mainCamera.transform.eulerAngles.y;
+                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
+                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+            }
+
+            // 5. 移動の実行
+            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * (!isBuildingMode ? Vector3.forward : inputDirection);
+            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+        }
+
+        private void HandleInputState()
         {
-            // Eキー (BuildMode): 設置モード ⇔ 移動モード のトグル切り替え
             if (_input.buildMode)
             {
-                _input.buildMode = false; // 入力フラグを消費（リセット）
-                
-                // 現在が「設置モード」なら -> 「立ち状態」に戻す
-                // (空中でも設置モード解除はできた方がバグ回避になるため、ここは条件なし)
-                if (CurrentState == PlayerState.Building)
+                _input.buildMode = false;
+                if (CurrentState == PlayerState.Standing)
+                {
+                    if (Grounded) CurrentState = PlayerState.CrawlingIdle;
+                }
+                else
                 {
                     CurrentState = PlayerState.Standing;
-                    UpdateState();
                 }
-                // 現在が「立ち状態」なら -> 「地面にいる時(Grounded)のみ」設置モードへ移行
-                else if (Grounded) 
-                {
-                    CurrentState = PlayerState.Building;
-                    UpdateState();
-                }
-                // ※ else (空中にいる場合) は何もしない
+                UpdateState();
             }
         }
+
         private void JumpAndGravity()
         {
+            // 建築モード中はジャンプ不可
+            if (CurrentState != PlayerState.Standing)
+            {
+                _input.jump = false;
+                _jumpTimeoutDelta = JumpTimeout;
+                if (Grounded && _verticalVelocity < 0.0f) _verticalVelocity = -2f;
+            }
+
             if (Grounded)
             {
-                // reset the fall timeout timer
                 _fallTimeoutDelta = FallTimeout;
-
-                // update animator if using character
                 if (_hasAnimator)
                 {
                     _animator.SetBool(_animIDJump, false);
                     _animator.SetBool(_animIDFreeFall, false);
                 }
 
-                // stop our velocity dropping infinitely when grounded
-                if (_verticalVelocity < 0.0f)
-                {
-                    _verticalVelocity = -2f;
-                }
+                if (_verticalVelocity < 0.0f) _verticalVelocity = -2f;
 
-                // Jump
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+                // ジャンプ実行（Standingのみ）
+                if (CurrentState == PlayerState.Standing && _input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
-                    // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
-
-                    // update animator if using character
-                    if (_hasAnimator)
-                    {
-                        _animator.SetBool(_animIDJump, true);
-                    }
+                    if (_hasAnimator) _animator.SetBool(_animIDJump, true);
                 }
 
-                // jump timeout
-                if (_jumpTimeoutDelta >= 0.0f)
-                {
-                    _jumpTimeoutDelta -= Time.deltaTime;
-                }
+                if (_jumpTimeoutDelta >= 0.0f) _jumpTimeoutDelta -= Time.deltaTime;
             }
             else
             {
-                // reset the jump timeout timer
                 _jumpTimeoutDelta = JumpTimeout;
-
-                // fall timeout
-                if (_fallTimeoutDelta >= 0.0f)
-                {
-                    _fallTimeoutDelta -= Time.deltaTime;
-                }
-                else
-                {
-                    // update animator if using character
-                    if (_hasAnimator)
-                    {
-                        _animator.SetBool(_animIDFreeFall, true);
-                    }
-                }
-
-                // if we are not grounded, do not jump
+                if (_fallTimeoutDelta >= 0.0f) _fallTimeoutDelta -= Time.deltaTime;
+                else if (_hasAnimator) _animator.SetBool(_animIDFreeFall, true);
                 _input.jump = false;
             }
 
-            
-            if (_verticalVelocity < _terminalVelocity)
-            {
-                _verticalVelocity += Gravity * Time.deltaTime;
-            }
+            if (_verticalVelocity < _terminalVelocity) _verticalVelocity += Gravity * Time.deltaTime;
         }
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
@@ -515,29 +333,48 @@ namespace StarterAssets
             return Mathf.Clamp(lfAngle, lfMin, lfMax);
         }
 
-        private void OnDrawGizmosSelected()
+        private void OnControllerColliderHit(ControllerColliderHit hit)
         {
-            Color transparentGreen = new Color(0.0f, 1.0f, 0.0f, 0.35f);
-            Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.35f);
-
-            if (Grounded) Gizmos.color = transparentGreen;
-            else Gizmos.color = transparentRed;
-
-            // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
-            Gizmos.DrawSphere(
-                new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z),
-                GroundedRadius);
+            if (!Grounded) return;
+            if (hit.normal.y < 0.1f) 
+            {
+                if (_verticalVelocity > 0f)
+                {
+                    _verticalVelocity = -2f; 
+                    _input.jump = false;
+                }
+            }
         }
 
+        private void UpdateState()
+        {
+            bool isAnyCrawl = (CurrentState != PlayerState.Standing);
+            
+            // カメラの切り替え
+            FPSCamera.Priority = isAnyCrawl ? 20 : 10;
+            TPSCamera.Priority = isAnyCrawl ? 10 : 20;
+
+            // 設置モードの有効化（これはハイハイ時のみで良いはずです）
+            if (dominoPlacementManager != null) 
+                dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
+
+            // ★修正箇所：状態に関わらず常にトリガーを有効にする
+            if (handFootTriggers != null)
+            {
+                foreach (var trigger in handFootTriggers) 
+                {
+                    trigger.IsActive = true; // 常時 true に設定
+                }
+            }
+        }
+
+        // Animator Events
         private void OnFootstep(AnimationEvent animationEvent)
         {
-            if (animationEvent.animatorClipInfo.weight > 0.5f)
+            if (animationEvent.animatorClipInfo.weight > 0.5f && FootstepAudioClips.Length > 0)
             {
-                if (FootstepAudioClips.Length > 0)
-                {
-                    var index = Random.Range(0, FootstepAudioClips.Length);
-                    AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
-                }
+                var index = Random.Range(0, FootstepAudioClips.Length);
+                AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
         }
 
@@ -548,58 +385,10 @@ namespace StarterAssets
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
         }
-
-        // CharacterControllerが他のコライダーに衝突したときに呼ばれる
-        private void OnControllerColliderHit(ControllerColliderHit hit)
-        {
-            // 1. 地面にいることを確認（空中での衝突は重力で対処）
-            if (!Grounded) return;
-
-            // 2. 衝突した面が水平に近い（壁、または登れない急斜面）かチェック
-            // hit.normal.y は法線ベクトルのY成分。0.1f 未満ならほぼ垂直と見なせる。
-            if (hit.normal.y < 0.1f) 
-            {
-                // 3. 垂直速度を強制的にリセット（負の値にして地面に張り付かせる）
-                // これにより、壁からの意図しない上向きの反力成分を無効化する。
-                if (_verticalVelocity > 0f)
-                {
-                    // 0fにするとバグる可能性があるため、小さな負の値(-2f)を維持
-                    _verticalVelocity = -2f; 
-
-                    // おまけ：ジャンプ入力フラグもリセットし、ジャンプそのものも防止する
-                    _input.jump = false;
-                }
-            }
-        }
-
-        // --- 状態更新時の処理（カメラとアニメ） ---
-        private void UpdateState()
+        
+        public void ForceUpdateState()
         {
-            // カメラの優先度切り替え（方針A）
-            if (CurrentState == PlayerState.Building)
-            {
-                // FPSカメラを有効化
-                FPSCamera.Priority = 20;
-                TPSCamera.Priority = 10;
-                
-                // 設置モードに入ったときに、CharacterControllerのColliderを調整しても良い
-                // _controller.height = 1.0f; // 例: 高さを低くする
-            }
-            else
-            {
-                // TPSカメラを有効化
-                FPSCamera.Priority = 10;
-                TPSCamera.Priority = 20;
-
-                // _controller.height = 2.0f; // 例: 高さを戻す
-            }
-
-            // アニメーターへの通知（四つん這い=Buildingとして扱う）
-            if (_hasAnimator)
-            {
-                // IsBuildingがtrueの時、Animatorで四つん這いのアニメーションに遷移させる
-                _animator.SetBool(_animIDIsBuilding, CurrentState == PlayerState.Building);
-            }
+            UpdateState();
         }
     }
 }
