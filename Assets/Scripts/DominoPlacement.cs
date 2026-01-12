@@ -28,6 +28,8 @@ public class DominoPlacement : MonoBehaviour
     // プロパティ：コントローラー側で参照可能にする（移動制限などのため）
     public bool IsManipulating => _isHolding;
 
+    private ThirdPersonController _controller;
+
     void Start()
     {
         if (hudManager == null)
@@ -122,14 +124,17 @@ public class DominoPlacement : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, 50f, groundLayer))
         {
-            // 緊張感による震え
-            Vector3 shake = Random.insideUnitSphere * shakeIntensity;
+            Vector3 targetPos = hit.point + (hit.normal * placementOffset);
             
-            // 地面の位置にオフセットと震えを加えて移動
-            _heldDomino.transform.position = hit.point + (hit.normal * placementOffset) + shake;
-            
-            // 地面の傾斜(hit.normal)に合わせつつ、蓄積された回転(_currentRotationY)を適用
+            // ドミノを動かす
+            _heldDomino.transform.position = targetPos;
             _heldDomino.transform.rotation = Quaternion.FromToRotation(Vector3.up, hit.normal) * _currentRotationY;
+
+            // 【ここが重要！】手のターゲットをドミノの位置に合わせる
+            if (_controller != null && _controller.ikTarget != null)
+            {
+                _controller.ikTarget.position = targetPos;
+            }
         }
     }
 

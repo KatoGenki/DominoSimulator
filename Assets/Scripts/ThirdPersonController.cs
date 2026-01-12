@@ -61,6 +61,15 @@ namespace StarterAssets
         [Header("Domino System")]
         public DominoPlacement dominoPlacementManager;
 
+        [Header("IK Settings")]
+        public Transform ikTarget; // 手が追いかける空のオブジェクト
+        public float ikWeightSpeed = 5f; // IKのオンオフの切り替え速度
+        private float _ikWeight = 0f; // 現在のIKの重み
+
+        [Header("Hand Movement Settings")]
+        public float handReachDistance = 2.0f; // 手が届く距離
+        public Vector3 handOffset = new Vector3(0.2f, -0.2f, 0.5f); // 画面中央からの手のズレ調整
+
         // 内部変数
         private bool _placeDomino = false; 
         private Vector2 _mouseDelta = Vector2.zero;
@@ -72,6 +81,7 @@ namespace StarterAssets
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 159.0f;
+        
 
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
@@ -143,16 +153,25 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            UpdateHandIKTarget();
 
             // マウスの移動量を更新
             if (_input != null) _mouseDelta = _input.look;
 
             // 建築モード（Crawling）の時のみドミノ操作を実行
             bool isBuildingMode = (CurrentState != PlayerState.Standing);
+            // ドミノ操作中（IsManipulating）はIKの重みを最大にする
+            float targetWeight = (isBuildingMode && dominoPlacementManager.IsManipulating) ? 1f : 0f;
+            _ikWeight = Mathf.Lerp(_ikWeight, targetWeight, Time.deltaTime * ikWeightSpeed);
+
             if (isBuildingMode && dominoPlacementManager != null)
             {
-                // 左クリックホールド(_placeDomino)中に移動と回転の両方を渡す
                 dominoPlacementManager.UpdatePlacementInput(_placeDomino, _mouseDelta);
+                
+                // ★追加：マウスの動きに合わせてIK Targetを動かす（簡易版）
+                if (ikTarget != null) {
+                    // カメラの向きに合わせてターゲットを移動させるロジックなどをここに
+                }
             }
         }
 
@@ -390,5 +409,44 @@ namespace StarterAssets
         {
             UpdateState();
         }
+
+        private void OnAnimatorIK(int layerIndex)
+        {
+            if (!_hasAnimator || ikTarget == null) return;
+
+            // 右手の位置と回転をIKターゲットに合わせる
+            _animator.SetIKPositionWeight(AvatarIKGoal.RightHand, _ikWeight);
+            _animator.SetIKRotationWeight(AvatarIKGoal.RightHand, _ikWeight);
+            
+            _animator.SetIKPosition(AvatarIKGoal.RightHand, ikTarget.position);
+            _animator.SetIKRotation(AvatarIKGoal.RightHand, ikTarget.rotation);
+        }
+
+        private void UpdateHandIKTarget()
+        {
+            if (CurrentState == PlayerState.Standing || ikTarget == null) return;
+
+            // 1. カメラの中央からレイ（光線）を飛ばす
+            Ray ray = new Ray(_mainCamera.transform.position, _mainCamera.transform.forward);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, handReachDistance, GroundLayers))
+            {
+                // 地面に当たった場合：その場所に手を近づける
+                ikTarget.position = Vector3.Lerp(ikTarget.position, hit.point + Vector3.up * 0.1f, Time.deltaTime * 10f);
+            }
+            else
+            {
+                // 何も当たらない場合：カメラの前方の空中に配置
+                Vector3 defaultPos = _mainCamera.transform.TransformPoint(handOffset + Vector3.forward * 1.5f);
+                ikTarget.position = Vector3.Lerp(ikTarget.position, defaultPos, Time.deltaTime * 5f);
+            }
+
+            // 手の向きをカメラの方向に合わせる（必要に応じて）
+            ikTarget.rotation = Quaternion.LookRotation(_mainCamera.transform.forward);
+        }
+
     }
+
+    
 }
