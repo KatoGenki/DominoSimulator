@@ -348,13 +348,18 @@ namespace StarterAssets
 
         private void UpdateState()
         {
-            bool isAnyCrawl = (CurrentState != PlayerState.Standing);
+            bool isAnyCrawl = CurrentState == PlayerState.CrawlingIdle || CurrentState == PlayerState.CrawlingMove;
+
+            if (_controller != null)
+                {
+                    _controller.detectCollisions = true;
+                }
             
             // カメラの切り替え
             FPSCamera.Priority = isAnyCrawl ? 20 : 10;
             TPSCamera.Priority = isAnyCrawl ? 10 : 20;
 
-            // 設置モードの有効化（これはハイハイ時のみで良いはずです）
+            // 設置モードの有効化
             if (dominoPlacementManager != null) 
                 dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
 

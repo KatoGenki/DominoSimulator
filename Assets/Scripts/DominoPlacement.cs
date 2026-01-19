@@ -1,6 +1,7 @@
 using UnityEngine;
 using StarterAssets;
 using UnityEngine.InputSystem;
+using UnityEngine.Animations.Rigging;
 
 public class DominoPlacement : MonoBehaviour
 {
@@ -16,6 +17,15 @@ public class DominoPlacement : MonoBehaviour
 
     [Header("緊張感演出")]
     public float shakeIntensity = 0.05f;    // ドミノの震えの強さ
+
+    [Header("IK Settings")]
+    [SerializeField] private Rig rightHandRig;           // RightHandRigオブジェクトのRigコンポーネント
+    [SerializeField] private Transform handIKTarget;     // 右手IKのTarget（追従させる空のGameObject）
+    [SerializeField] private float weightLerpSpeed = 5f; // 重み切り替えの滑らかさ
+    [SerializeField] private Vector3 handOffset = new Vector3(0.1f, 0.1f, 0f); // 手をドミノのどこに添えるか
+
+    // 設置モードが有効かどうかを保持する変数
+    private bool _isPlacementModeActive = false;
 
     private GameObject _heldDomino;         // 現在ホールド中のドミノ実体
     private bool _isHolding = false;
@@ -43,17 +53,36 @@ public class DominoPlacement : MonoBehaviour
 
     void Update()
     {
-        if (_isHolding)
+
+        // 1. IKの重み（Weight）を制御
+        float targetWeight = _isPlacementModeActive ? 1f : 0f;
+        if (rightHandRig != null)
         {
-            // 円運動による回転検知
-            DetectCircularMotion();
-            
-            // ドミノの物理的な位置と回転を反映
-            UpdateHeldDomino();
+            rightHandRig.weight = Mathf.Lerp(rightHandRig.weight, targetWeight, Time.deltaTime * weightLerpSpeed);
         }
+
+        // 2. 四つん這い状態なら、クリックの状態に関わらず手を追従させる
+        if (_isPlacementModeActive && handIKTarget != null)
+        {
+            UpdateHandPosition();
+        }
+
+        if (_isHolding && _heldDomino != null)
+            {
+                // ★修正：ホールド中のドミノ自身のコライダーを無効化する
+                // これにより、ドミノが体にめり込んでもプレイヤーが浮き上がらなくなります
+                var colliders = _heldDomino.GetComponentsInChildren<Collider>();
+                foreach (var col in colliders)
+                {
+                    col.enabled = false;
+                }
+                // ドミノの物理的な位置と回転を反映
+                UpdateHeldDomino();
+            }
 
         // 1フレーム前の移動量を保存
         _previousMouseDelta = _mouseDelta;
+
     }
 
     /// <summary>
@@ -122,11 +151,9 @@ public class DominoPlacement : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, 50f, groundLayer))
         {
-            // 緊張感による震え
-            Vector3 shake = Random.insideUnitSphere * shakeIntensity;
-            
+
             // 地面の位置にオフセットと震えを加えて移動
-            _heldDomino.transform.position = hit.point + (hit.normal * placementOffset) + shake;
+            _heldDomino.transform.position = hit.point + (hit.normal * placementOffset);
             
             // 地面の傾斜(hit.normal)に合わせつつ、蓄積された回転(_currentRotationY)を適用
             _heldDomino.transform.rotation = Quaternion.FromToRotation(Vector3.up, hit.normal) * _currentRotationY;
@@ -137,20 +164,33 @@ public class DominoPlacement : MonoBehaviour
     {
         if (_heldDomino != null)
         {
-            // 【修正箇所】"Default" を "Domino" に変更
-            // これにより、配置後はプレイヤーとの衝突設定（すり抜け）が適用されるレイヤーになります
-            int dominoLayer = LayerMask.NameToLayer("DominoLayer");
-            
-            // もしレイヤー名 "Domino" を作成していない場合は、ここをプレハブのレイヤーに合わせる
-            // SetLayerRecursive(_heldDomino, dominoPrefab.layer); 
-            
-            SetLayerRecursive(_heldDomino, dominoLayer);
-            
-            Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
-            if (rb != null) rb.isKinematic = false;
+            // 1. コライダーをすべて有効に戻す
+            var colliders = _heldDomino.GetComponentsInChildren<Collider>();
+            foreach (var col in colliders)
+            {
+                col.enabled = true;
+                Debug.Log($"<color=green>Domino Collider Re-enabled: {col.name}</color>");
+            }
 
-            Debug.Log("Domino Released to Domino Layer!");
+            // 2. レイヤーを Domino に戻す
+            int dominoLayer = LayerMask.NameToLayer("Domino");
+            if (dominoLayer != -1)
+            {
+                SetLayerRecursive(_heldDomino, dominoLayer);
+            }
+
+            // 3. 物理を有効にする
+            Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.useGravity = true;
+            }
+
+            Debug.Log("Domino Released and Physics Activated.");
         }
+
+        // 最後にホールド状態を解除
         _isHolding = false;
         _heldDomino = null;
     }
@@ -176,9 +216,11 @@ public class DominoPlacement : MonoBehaviour
         }
     }
 
+    // ThirdPersonControllerから呼ばれるメソッド
     public void SetPlacementModeActive(bool isActive)
     {
         this.enabled = isActive;
+        _isPlacementModeActive = isActive; // モード状態を記録
 
         if (isActive)
         {
@@ -190,15 +232,21 @@ public class DominoPlacement : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             
-            // モード解除時にホールド中なら破棄
             if (_heldDomino != null) Destroy(_heldDomino);
             _isHolding = false;
-            _heldDomino = null;
+            
+            // モード終了時にIKの重みを即座に下げる準備
+            if(rightHandRig != null) rightHandRig.weight = 0f; 
         }
-
-        if (hudManager != null)
+    }
+    private void UpdateHandPosition()
+    {
+        // 既に生成されているプレビュー用ドミノ、またはホールド中のドミノの位置を取得
+        // DominoPlacementの既存ロジックで _heldDomino は常にマウスポインタの位置に更新されているためこれを利用
+        if (_heldDomino != null)
         {
-            hudManager.SetHandIconVisible(isActive);
+            handIKTarget.position = _heldDomino.transform.position + _heldDomino.transform.TransformDirection(handOffset);
+            handIKTarget.rotation = _heldDomino.transform.rotation;
         }
     }
 
