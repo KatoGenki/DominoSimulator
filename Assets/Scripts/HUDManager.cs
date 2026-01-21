@@ -15,7 +15,7 @@ public class DominoData
 }
 
 public class HUDManager : MonoBehaviour
-{
+{   // シングルトンインスタンス
     public static HUDManager Instance { get; private set; }
 
     [Header("ホットバー設定")]
@@ -35,19 +35,22 @@ public class HUDManager : MonoBehaviour
     [Header("タイマー・ノルマ表示")]
     public TMPro.TextMeshProUGUI timerText;
     public TMPro.TextMeshProUGUI targetScoreText;
+    //選択中のスロット
     private int _currentSelectedIndex = 0;
+    //一度でも選択したかどうかのフラグ
     private bool _hasSelectedOnce = false;
     private Vector3 _originalHandPos;
     private Vector3 _targetHandPos;
 
     void Awake() 
-    {
+    {   //手のアイコンの位置を保存
         if (handIcon != null) _originalHandPos = handIcon.rectTransform.localPosition;
+        //インスタンスをセット
         if (Instance == null) { Instance = this; } else { Destroy(gameObject); }
     }
 
     void Start()
-    {
+    {   // 起動時にセレクターと手のアイコンを非表示にする
         if (selector != null) selector.gameObject.SetActive(false);
         if (handIcon != null) handIcon.gameObject.SetActive(false);
         
@@ -60,8 +63,9 @@ public class HUDManager : MonoBehaviour
     {
         // マウスホイールによる選択切り替え
         if (Mouse.current != null)
-        {
+        {   //スクロールの位置を取得
             Vector2 scrollVector = Mouse.current.scroll.ReadValue();
+            //スクロールがあったら
             if (scrollVector.y != 0f)
             {
                 if (!_hasSelectedOnce)
@@ -81,7 +85,7 @@ public class HUDManager : MonoBehaviour
         if (Keyboard.current != null)
         {
             for (int i = 0; i < slots.Count; i++)
-            {
+            {   //キーボードの
                 if (Keyboard.current[Key.Digit1 + i].wasPressedThisFrame)
                 {
                     if (!_hasSelectedOnce) ShowSelector();
@@ -92,7 +96,7 @@ public class HUDManager : MonoBehaviour
         }
     }
 
-    // ★追加：スロットの表示（画像と数値）を更新するメソッド
+    // スロットの表示（画像と数値）を更新するメソッド
     public void RefreshAllSlots()
     {
         for (int i = 0; i < slots.Count; i++)
