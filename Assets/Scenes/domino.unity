@@ -2699,7 +2699,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ScoreManager
   totalScore: 0
   chainCount: 0
-  heightMultiplier: 0.5
   chainBonusStep: 0.01
 --- !u!4 &935026361
 Transform:
@@ -2925,18 +2924,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DominoPlacement
   dominoPrefab: {fileID: 2800341498733234700, guid: 40c4a21082656bd4bac845b629124b67, type: 3}
-  hudManager: {fileID: 709196505}
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
   placementOffset: 0.5
   rotationSensitivity: 2
   minMouseSpeed: 1
-  shakeIntensity: 0.05
   rightHandRig: {fileID: 1228310354}
   handIKTarget: {fileID: 1515163327}
   weightLerpSpeed: 5
   handOffset: {x: 0.1, y: 1, z: 0}
+  handRotationOffset: {x: 145, y: 0, z: 0}
 --- !u!114 &963682449
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5384,6 +5382,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1515163327}
   - component: {fileID: 1515163328}
+  - component: {fileID: 1515163329}
+  - component: {fileID: 1515163330}
   m_Layer: 7
   m_Name: RightHandTarget
   m_TagString: Untagged
@@ -5430,6 +5430,76 @@ MonoBehaviour:
     m_HintWeight: 1
     m_MaintainTargetPositionOffset: 1
     m_MaintainTargetRotationOffset: 1
+--- !u!114 &1515163329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1515163326}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 796b75e345bd64d47a31edd757bd2670, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.ChainIKConstraint
+  m_Weight: 1
+  m_Data:
+    m_Root: {fileID: 467901615}
+    m_Tip: {fileID: 1135324249}
+    m_Target: {fileID: 1515163327}
+    m_ChainRotationWeight: 1
+    m_TipRotationWeight: 1
+    m_MaxIterations: 15
+    m_Tolerance: 0.0001
+    m_MaintainTargetPositionOffset: 0
+    m_MaintainTargetRotationOffset: 0
+--- !u!114 &1515163330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1515163326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdb90b913935e644baaa86c076d788e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.MultiRotationConstraint
+  m_Weight: 1
+  m_Data:
+    m_ConstrainedObject: {fileID: 0}
+    m_SourceObjects:
+      m_Length: 1
+      m_Item0:
+        transform: {fileID: 663583193}
+        weight: 1
+      m_Item1:
+        transform: {fileID: 0}
+        weight: 0
+      m_Item2:
+        transform: {fileID: 0}
+        weight: 0
+      m_Item3:
+        transform: {fileID: 0}
+        weight: 0
+      m_Item4:
+        transform: {fileID: 0}
+        weight: 0
+      m_Item5:
+        transform: {fileID: 0}
+        weight: 0
+      m_Item6:
+        transform: {fileID: 0}
+        weight: 0
+      m_Item7:
+        transform: {fileID: 0}
+        weight: 0
+    m_Offset: {x: 0, y: 0, z: 0}
+    m_ConstrainedAxes:
+      x: 1
+      y: 1
+      z: 1
+    m_MaintainOffset: 1
 --- !u!1 &1544872325
 GameObject:
   m_ObjectHideFlags: 0

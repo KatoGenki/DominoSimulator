@@ -144,16 +144,25 @@ namespace StarterAssets
             GroundedCheck();
             Move();
 
-            // マウスの移動量を更新
-            if (_input != null) _mouseDelta = _input.look;
+            // 1. 状態判定（isAnyCrawlなどは既存のロジックを使用）
+            bool isAnyCrawl = CurrentState == PlayerState.CrawlingIdle || CurrentState == PlayerState.CrawlingMove;
 
-            // 建築モード（Crawling）の時のみドミノ操作を実行
-            bool isBuildingMode = (CurrentState != PlayerState.Standing);
-            if (isBuildingMode && dominoPlacementManager != null)
+            // 2. 設置モードの有効化/無効化の切り替え
+            if (dominoPlacementManager != null) 
             {
-                // 左クリックホールド(_placeDomino)中に移動と回転の両方を渡す
-                dominoPlacementManager.UpdatePlacementInput(_placeDomino, _mouseDelta);
+                // モードが切り替わったとき、または継続的に状態を同期
+                dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
             }
+            // // マウスの移動量を更新
+            // if (_input != null) _mouseDelta = _input.look;
+
+            // // 建築モード（Crawling）の時のみドミノ操作を実行
+            // bool isBuildingMode = (CurrentState != PlayerState.Standing);
+            // if (isBuildingMode && dominoPlacementManager != null)
+            // {
+            //     // 左クリックホールド(_placeDomino)中に移動と回転の両方を渡す
+            //     dominoPlacementManager.UpdatePlacementInput(_placeDomino, _mouseDelta);
+            // }
         }
 
         private void LateUpdate()

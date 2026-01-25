@@ -109,11 +109,15 @@ public class HUDManager : MonoBehaviour
             {
                 // データがある場合
                 if (iconTr) {
+                    //アイコンを表示
                     iconTr.gameObject.SetActive(true);
+                    //アイコンを設定
                     iconTr.GetComponent<Image>().sprite = dominoInventory[i].icon;
                 }
                 if (textTr) {
+                    //テキストを表示
                     textTr.gameObject.SetActive(true);
+                    //該当ドミノの残量を表示
                     textTr.GetComponent<TextMeshProUGUI>().text = dominoInventory[i].currentCount.ToString();
                 }
             }
@@ -128,9 +132,9 @@ public class HUDManager : MonoBehaviour
 
     // 選択中のドミノデータを取得するメソッド（DominoPlacementから使う）
     public DominoData GetSelectedDominoData()
-    {
+    {  
         if (_hasSelectedOnce && _currentSelectedIndex < dominoInventory.Count)
-        {
+        {   //選択されているドミノデータを返す
             return dominoInventory[_currentSelectedIndex];
         }
         return null;
@@ -140,8 +144,9 @@ public class HUDManager : MonoBehaviour
     public void UseSelectedDomino()
     {
         var data = GetSelectedDominoData();
+        //ドミノデータがあり、かつ残量がある場合
         if (data != null && data.currentCount > 0)
-        {
+        {   //残量を1減らす
             data.currentCount--;
             RefreshAllSlots(); // 表示を更新
         }
@@ -165,8 +170,6 @@ public class HUDManager : MonoBehaviour
             int seconds = Mathf.FloorToInt(time % 60F);
             timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
             timerText.alignment = TextAlignmentOptions.Right;
-            // 残り10秒で赤くする演出
-            if (time <= 10f) timerText.color = Color.red;
         }
     }
 

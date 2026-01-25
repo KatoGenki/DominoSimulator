@@ -61,7 +61,7 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "PlaceDomino",
+                    "name": "RotateMode",
                     "type": "Value",
                     "id": "d0b452ba-1564-4802-929b-166110a8fb6f",
                     "expectedControlType": "",
@@ -70,7 +70,7 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "RotateMode",
+                    "name": "PlaceMode",
                     "type": "Button",
                     "id": "ccc6746b-3eff-4a54-86af-2413a829b85c",
                     "expectedControlType": "",
@@ -296,17 +296,6 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";KeyboardMouse",
-                    "action": "PlaceDomino",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "92c05d21-6910-43b5-aac4-d043472e1ef9",
-                    "path": "",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
                     "action": "RotateMode",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -318,7 +307,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";KeyboardMouse",
-                    "action": "RotateMode",
+                    "action": "PlaceMode",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
