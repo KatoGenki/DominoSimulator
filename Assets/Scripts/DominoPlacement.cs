@@ -7,7 +7,7 @@ public class DominoPlacement : MonoBehaviour
 {
     [Header("参照")]
     public GameObject dominoPrefab;
-    public LayerMask groundLayer;
+    public LayerMask Ground;
 
     [Header("設定")]
     public float placementOffset = 0.5f;
@@ -20,6 +20,8 @@ public class DominoPlacement : MonoBehaviour
     [SerializeField] private float weightLerpSpeed = 5f;
     [SerializeField] private Vector3 handOffset = new Vector3(0.1f, 0.1f, 0f);
     [SerializeField] private Vector3 handRotationOffset = new Vector3(0f, -90f, 0f);
+    [SerializeField] private Vector3 dominoSpawnOffset = new Vector3(0f, 0f, 0f);
+
 
     private bool _isPlacementModeActive = false;
     private GameObject _heldDomino;
@@ -80,17 +82,26 @@ public class DominoPlacement : MonoBehaviour
         Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
         if (rb) rb.isKinematic = true;
 
+        // handIKTarget の位置と回転に合わせてドミノを生成
+        if (handIKTarget != null)
+        {
+            _heldDomino.transform.position = handIKTarget.position + handIKTarget.TransformDirection(dominoSpawnOffset);
+            _heldDomino.transform.rotation = handIKTarget.rotation * Quaternion.Euler(handRotationOffset);
+        }
+        else
+        {
+            // フォールバック: マウス位置
+            MoveDominoWithMouse();
+        }
+
         _currentRotationY = _heldDomino.transform.rotation;
-        
-        // 最初はマウスポインタの地点に移動
-        MoveDominoWithMouse(); 
         Debug.Log("Domino Grabbed (Left Click)");
     }
 
     private void MoveDominoWithMouse()
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, groundLayer))
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, Ground))
         {
             Vector3 targetPos = hit.point + Vector3.up * placementOffset;
             _heldDomino.transform.position = targetPos;
@@ -123,9 +134,10 @@ public class DominoPlacement : MonoBehaviour
     {
         if (_mouseDelta.magnitude < minMouseSpeed || _previousMouseDelta.magnitude < minMouseSpeed) return;
         float angleChange = Vector2.SignedAngle(_previousMouseDelta, _mouseDelta);
-        _currentRotationY *= Quaternion.Euler(0, angleChange * rotationSensitivity, 0);
+        _currentRotationY *= Quaternion.Euler(0, -(angleChange * rotationSensitivity), 0);
     }
 
+    //IKハンドルの重みと位置更新
     private void UpdateIKWeight()
     {
         if (rightHandRig == null) return;
@@ -142,7 +154,7 @@ public class DominoPlacement : MonoBehaviour
             Vector3 offset = handOffset;
             offset.y -= 1.0f; // Y座標をさらに下げる
             handIKTarget.position = _heldDomino.transform.position + _heldDomino.transform.TransformDirection(offset);
-            handIKTarget.rotation = _heldDomino.transform.rotation * Quaternion.Euler(handRotationOffset); // 90度は調整
+            handIKTarget.rotation = _heldDomino.transform.rotation * Quaternion.Euler(handRotationOffset);
         }
     }
 
