@@ -13,19 +13,29 @@ public class DominoPlacement : MonoBehaviour
     public float placementOffset = 0.5f;
     public float rotationSensitivity = 2.0f;
     public float minMouseSpeed = 1.0f;
+    public Transform fpsCameraTransform; // FPSカメラのTransform
 
     [Header("IK Settings")]
     [SerializeField] private Rig rightHandRig;
     [SerializeField] private Transform handIKTarget;
     [SerializeField] private float weightLerpSpeed = 5f;
+        [SerializeField] private Vector3 handRestingOffset = new Vector3(0.3f, -0.4f, 0.5f); // カメラからの相対位置
+
+    [Header("Hand Offset Settings")]
     [SerializeField] private Vector3 handOffset = new Vector3(0.1f, 0.1f, 0f);
-    [SerializeField] private Vector3 handRotationOffset = new Vector3(0f, -90f, 0f);
+    [SerializeField] private Vector3 handRotationOffset = new Vector3(30f, 150f, 270f);
+    
+    [Header("Domino Spawn Offset")]
     [SerializeField] private Vector3 dominoSpawnOffset = new Vector3(0f, 0f, 0f);
+    [SerializeField] private Vector3 dominoSpawnRotationOffset = new Vector3(90f, 0f, 0f);
 
 
     private bool _isPlacementModeActive = false;
     private GameObject _heldDomino;
-    private Quaternion _currentRotationY = Quaternion.identity;
+    private Quaternion _handIKTargetRotation = Quaternion.identity;  // handIKTarget専用の回転
+    private Vector3 _dominoInitialRelativePosition = Vector3.zero;   // ドミノの初期相対位置
+    private bool _isRightClickHeld = false;                           // 右クリック状態
+    private bool _isLeftClickHeld = false;                          // 左クリック状態
     private Vector2 _mouseDelta;
     private Vector2 _previousMouseDelta;
 
@@ -42,33 +52,58 @@ public class DominoPlacement : MonoBehaviour
         if (mouse.leftButton.wasPressedThisFrame && _heldDomino == null)
         {
             SpawnDominoPreview();
+            _isLeftClickHeld = true;
         }
 
         if (_heldDomino != null)
         {
-            // 2. 【移動】右クリックホールド中のみ、地面に沿って移動
-            if (mouse.rightButton.isPressed)
+            // 2. 【移動】右クリックホールド中のみhandIKTarget位置を更新
+            if (mouse.rightButton.wasPressedThisFrame)
             {
-                MoveDominoWithMouse();
+                // 右クリック開始時：マウスデルタをリセット（移動の基準点を現在位置に設定）
+                _isRightClickHeld = true;
+            }
+            // 右クリックホールド中：マウスデルタをワールド座標に変換して移動
+            if (mouse.rightButton.isPressed && _isRightClickHeld)
+            {
+                Vector2 screenMouseDelta = mouse.delta.ReadValue();
+                Vector3 cameraRight = Camera.main.transform.right;
+                // 画面上下はワールド上軸（Y軸）に対応させる（カメラ向きに依存しない）
+                Vector3 worldMovement = (cameraRight * screenMouseDelta.x + Vector3.up) * 0.01f;
+                handIKTarget.position += worldMovement;
+            }
+            else if (_isRightClickHeld && !mouse.rightButton.isPressed)
+            {
+                // 右クリック終了時にhandIKTarget位置を固定
+                _isRightClickHeld = false;
             }
 
             // 3. 【回転】左クリックホールド中は回転を検知
             if (mouse.leftButton.isPressed)
             {
                 DetectCircularMotion();
-                _heldDomino.transform.rotation = _currentRotationY;
+                // ドミノ自体の回転
+                _heldDomino.transform.rotation = Quaternion.Euler(dominoSpawnRotationOffset);
+                
+                // ドミノ位置：handIKTarget + (回転適用した初期相対位置)
+                _heldDomino.transform.position = handIKTarget.position + (_handIKTargetRotation * _dominoInitialRelativePosition);
             }
 
             // 4. 【終了】左クリックを離した瞬間に設置（物理有効化）
             if (mouse.leftButton.wasReleasedThisFrame)
             {
                 PlaceDomino();
+                _isLeftClickHeld = false;
             }
         }
 
         // 共通更新
         UpdateIKWeight();
-        UpdateHandPosition();
+        // 右クリック中以外はhandIKTarget位置を固定
+        if (!_isRightClickHeld && !_isLeftClickHeld)
+        {
+            UpdateHandPosition();
+        }
         _previousMouseDelta = _mouseDelta;
     }
 
@@ -82,30 +117,30 @@ public class DominoPlacement : MonoBehaviour
         Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
         if (rb) rb.isKinematic = true;
 
-        // handIKTarget の位置と回転に合わせてドミノを生成
+        // handIKTargetの位置と回転に合わせてドミノを生成
         if (handIKTarget != null)
         {
-            _heldDomino.transform.position = handIKTarget.position + handIKTarget.TransformDirection(dominoSpawnOffset);
-            _heldDomino.transform.rotation = handIKTarget.rotation * Quaternion.Euler(handRotationOffset);
+            // 初期相対位置をdominoSpawnOffsetで設定
+            _dominoInitialRelativePosition = dominoSpawnOffset;
+            // handIKTargetの回転をdominoSpawnRotationOffsetで初期化
+            _handIKTargetRotation = Quaternion.Euler(dominoSpawnRotationOffset);
+            
+            _heldDomino.transform.position = handIKTarget.position + _dominoInitialRelativePosition;
+            _heldDomino.transform.rotation = Quaternion.Euler(dominoSpawnRotationOffset);
         }
         else
         {
-            // フォールバック: マウス位置
-            MoveDominoWithMouse();
+            // フォールバック: マウス位置を基準にドミノを配置
+            Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+            if (Physics.Raycast(ray, out RaycastHit hit, 100f, Ground))
+            {
+                Vector3 targetPos = hit.point + Vector3.up * placementOffset;
+                _heldDomino.transform.position = targetPos;
+                handIKTarget.position = targetPos;
+            }
         }
 
-        _currentRotationY = _heldDomino.transform.rotation;
         Debug.Log("Domino Grabbed (Left Click)");
-    }
-
-    private void MoveDominoWithMouse()
-    {
-        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, Ground))
-        {
-            Vector3 targetPos = hit.point + Vector3.up * placementOffset;
-            _heldDomino.transform.position = targetPos;
-        }
     }
 
     private void PlaceDomino()
@@ -134,7 +169,7 @@ public class DominoPlacement : MonoBehaviour
     {
         if (_mouseDelta.magnitude < minMouseSpeed || _previousMouseDelta.magnitude < minMouseSpeed) return;
         float angleChange = Vector2.SignedAngle(_previousMouseDelta, _mouseDelta);
-        _currentRotationY *= Quaternion.Euler(0, -(angleChange * rotationSensitivity), 0);
+        _handIKTargetRotation *= Quaternion.Euler(0, -(angleChange * rotationSensitivity), 0);
     }
 
     //IKハンドルの重みと位置更新
@@ -146,16 +181,10 @@ public class DominoPlacement : MonoBehaviour
     }
 
     private void UpdateHandPosition()
-    {
-        // 既に生成されているプレビュー用ドミノ、またはホールド中のドミノの位置を取得
-        // DominoPlacementの既存ロジックで _heldDomino は常にマウスポインタの位置に更新されているためこれを利用
-        if (_heldDomino != null)
-        {
-            Vector3 offset = handOffset;
-            offset.y -= 1.0f; // Y座標をさらに下げる
-            handIKTarget.position = _heldDomino.transform.position + _heldDomino.transform.TransformDirection(offset);
-            handIKTarget.rotation = _heldDomino.transform.rotation * Quaternion.Euler(handRotationOffset);
-        }
+    {   // カメラからの相対位置に手を移動（固定）
+        Vector3 targetPos = fpsCameraTransform.TransformPoint(handRestingOffset);
+        handIKTarget.position = Vector3.Lerp(handIKTarget.position, targetPos, Time.deltaTime * 5f);
+        handIKTarget.rotation = fpsCameraTransform.rotation * Quaternion.Euler(handRotationOffset);
     }
 
     private void SetLayerRecursive(GameObject obj, int newLayer)

@@ -2896,10 +2896,10 @@ CharacterController:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
@@ -2930,12 +2930,15 @@ MonoBehaviour:
   placementOffset: 0.5
   rotationSensitivity: 0.5
   minMouseSpeed: 20
+  fpsCameraTransform: {fileID: 1987249658}
   rightHandRig: {fileID: 1228310354}
   handIKTarget: {fileID: 1515163327}
   weightLerpSpeed: 5
+  handRestingOffset: {x: 0.05, y: 0, z: 0.05}
   handOffset: {x: 0.1, y: 0.1, z: 0}
-  handRotationOffset: {x: 30, y: 150, z: 270}
-  dominoSpawnOffset: {x: 0, y: 0, z: 0}
+  handRotationOffset: {x: 180, y: 150, z: 180}
+  dominoSpawnOffset: {x: -0.5, y: 0, z: -0.5}
+  dominoSpawnRotationOffset: {x: 0, y: 105, z: 0}
 --- !u!114 &963682449
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3880,17 +3883,17 @@ PrefabInstance:
       addedObject: {fileID: 1672945553}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
+      insertIndex: 1
+      addedObject: {fileID: 963682448}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
+      insertIndex: 2
+      addedObject: {fileID: 963682445}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 963682447}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 963682446}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 963682445}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 963682448}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 963682449}
@@ -5414,7 +5417,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1515163326}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aeda7bfbf984f2a4da5ab4b8967b115d, type: 3}
   m_Name: 
@@ -5438,14 +5441,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1515163326}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 796b75e345bd64d47a31edd757bd2670, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.ChainIKConstraint
   m_Weight: 1
   m_Data:
-    m_Root: {fileID: 467901615}
+    m_Root: {fileID: 1934032386}
     m_Tip: {fileID: 1135324249}
     m_Target: {fileID: 1515163327}
     m_ChainRotationWeight: 1
