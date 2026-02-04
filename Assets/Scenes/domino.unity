@@ -2929,14 +2929,14 @@ MonoBehaviour:
     m_Bits: 8
   placementOffset: 0.5
   rotationSensitivity: 0.5
-  minMouseSpeed: 20
+  minMouseSpeed: 0.1
   fpsCameraTransform: {fileID: 1987249658}
   rightHandRig: {fileID: 1228310354}
   handIKTarget: {fileID: 1515163327}
   weightLerpSpeed: 5
   handRestingOffset: {x: 0.05, y: 0, z: 0.05}
   handOffset: {x: 0.1, y: 0.1, z: 0}
-  handRotationOffset: {x: 180, y: 150, z: 180}
+  handRotationOffset: {x: 90, y: 150, z: 150}
   dominoSpawnOffset: {x: -0.5, y: 0, z: -0.5}
   dominoSpawnRotationOffset: {x: 0, y: 105, z: 0}
 --- !u!114 &963682449
@@ -5403,13 +5403,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1515163326}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.48439923, y: -0.5237487, z: 0.5171505, w: -0.47286358}
+  m_LocalRotation: {x: 0.61237246, y: -0.35355338, z: -0.35355338, w: 0.61237246}
   m_LocalPosition: {x: 6.155872, y: 0.3299156, z: 3.1187134}
   m_LocalScale: {x: 1.0000001, y: 1, z: 0.9999999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1228310355}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 150, y: 90, z: 90}
 --- !u!114 &1515163328
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6770,7 +6770,7 @@ MonoBehaviour:
   _timerText: {fileID: 1421986025}
   _stateText: {fileID: 0}
   _resultPanel: {fileID: 0}
-  _buildTimeLimit: 30
+  _buildTimeLimit: 1000
   _velocityThreshold: 0.1
   _stopDurationThreshold: 0.5
   _camera2: {fileID: 1102695962}

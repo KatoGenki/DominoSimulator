@@ -12,7 +12,7 @@ public class DominoPlacement : MonoBehaviour
     [Header("設定")]
     public float placementOffset = 0.5f;
     public float rotationSensitivity = 2.0f;
-    public float minMouseSpeed = 1.0f;
+    public float minMouseSpeed = 0.1f;
     public Transform fpsCameraTransform; // FPSカメラのTransform
 
     [Header("IK Settings")]
@@ -67,9 +67,10 @@ public class DominoPlacement : MonoBehaviour
             if (mouse.rightButton.isPressed && _isRightClickHeld)
             {
                 Vector2 screenMouseDelta = mouse.delta.ReadValue();
+                //カメラの向きを基準に移動量を計算
                 Vector3 cameraRight = Camera.main.transform.right;
-                // 画面上下はワールド上軸（Y軸）に対応させる（カメラ向きに依存しない）
-                Vector3 worldMovement = (cameraRight * screenMouseDelta.x + Vector3.up) * 0.01f;
+                Vector3 cameraup = Camera.main.transform.up;
+                Vector3 worldMovement = (cameraRight * screenMouseDelta.x + cameraup * screenMouseDelta.y) * 0.01f;
                 handIKTarget.position += worldMovement;
             }
             else if (_isRightClickHeld && !mouse.rightButton.isPressed)
@@ -84,9 +85,8 @@ public class DominoPlacement : MonoBehaviour
                 DetectCircularMotion();
                 // ドミノ自体の回転
                 _heldDomino.transform.rotation = Quaternion.Euler(dominoSpawnRotationOffset);
-                
                 // ドミノ位置：handIKTarget + (回転適用した初期相対位置)
-                _heldDomino.transform.position = handIKTarget.position + (_handIKTargetRotation * _dominoInitialRelativePosition);
+                _heldDomino.transform.position = handIKTarget.position + (handIKTarget.rotation * _dominoInitialRelativePosition);
             }
 
             // 4. 【終了】左クリックを離した瞬間に設置（物理有効化）
@@ -98,8 +98,8 @@ public class DominoPlacement : MonoBehaviour
         }
 
         // 共通更新
-        UpdateIKWeight();
-        // 右クリック中以外はhandIKTarget位置を固定
+         UpdateIKWeight();
+        // // 右クリック中以外はhandIKTarget位置を固定
         if (!_isRightClickHeld && !_isLeftClickHeld)
         {
             UpdateHandPosition();
@@ -167,9 +167,15 @@ public class DominoPlacement : MonoBehaviour
 
     private void DetectCircularMotion()
     {
-        if (_mouseDelta.magnitude < minMouseSpeed || _previousMouseDelta.magnitude < minMouseSpeed) return;
+        Debug.Log($"{handIKTarget.rotation}");
+        if (_mouseDelta.magnitude < minMouseSpeed || _previousMouseDelta.magnitude < minMouseSpeed) 
+        {
+            Debug.Log("Mouse movement too small to detect rotation.");
+            return;
+        }
         float angleChange = Vector2.SignedAngle(_previousMouseDelta, _mouseDelta);
-        _handIKTargetRotation *= Quaternion.Euler(0, -(angleChange * rotationSensitivity), 0);
+        //2/4追加　XとZ軸の回転量を調整して疑似的に水平回転を作りたい
+        handIKTarget.rotation *= Quaternion.Euler(angleChange * 0.5f, 0f, angleChange * 0.3f);
     }
 
     //IKハンドルの重みと位置更新
@@ -184,7 +190,8 @@ public class DominoPlacement : MonoBehaviour
     {   // カメラからの相対位置に手を移動（固定）
         Vector3 targetPos = fpsCameraTransform.TransformPoint(handRestingOffset);
         handIKTarget.position = Vector3.Lerp(handIKTarget.position, targetPos, Time.deltaTime * 5f);
-        handIKTarget.rotation = fpsCameraTransform.rotation * Quaternion.Euler(handRotationOffset);
+        //handITTarget.rotationを直接いじる方針を試すためコメントアウト
+        //handIKTarget.rotation = fpsCameraTransform.rotation * Quaternion.Euler(150f,90f,90f);
     }
 
     private void SetLayerRecursive(GameObject obj, int newLayer)
