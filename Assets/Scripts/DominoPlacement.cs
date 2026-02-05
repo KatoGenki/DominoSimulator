@@ -22,8 +22,10 @@ public class DominoPlacement : MonoBehaviour
         [SerializeField] private Vector3 handRestingOffset = new Vector3(0.3f, -0.4f, 0.5f); // カメラからの相対位置
 
     [Header("Hand Offset Settings")]
-    [SerializeField] private Vector3 handOffset = new Vector3(0.1f, 0.1f, 0f);
-    [SerializeField] private Vector3 handRotationOffset = new Vector3(30f, 150f, 270f);
+    [SerializeField]private Vector3 _handIKTargetRotation = new Vector3(150f, 150f, 90f);  // handIKTarget専用の回転
+    [SerializeField] private float xAxisAngle = 0.5f;
+    [SerializeField] private float zAxisAngle = 0.5f;
+
     
     [Header("Domino Spawn Offset")]
     [SerializeField] private Vector3 dominoSpawnOffset = new Vector3(0f, 0f, 0f);
@@ -32,7 +34,7 @@ public class DominoPlacement : MonoBehaviour
 
     private bool _isPlacementModeActive = false;
     private GameObject _heldDomino;
-    private Quaternion _handIKTargetRotation = Quaternion.identity;  // handIKTarget専用の回転
+
     private Vector3 _dominoInitialRelativePosition = Vector3.zero;   // ドミノの初期相対位置
     private bool _isRightClickHeld = false;                           // 右クリック状態
     private bool _isLeftClickHeld = false;                          // 左クリック状態
@@ -118,15 +120,18 @@ public class DominoPlacement : MonoBehaviour
         if (rb) rb.isKinematic = true;
 
         // handIKTargetの位置と回転に合わせてドミノを生成
-        if (handIKTarget != null)
+        if (handIKTarget != null && fpsCameraTransform != null)
         {
-            // 初期相対位置をdominoSpawnOffsetで設定
+            // handIKTarget をカメラ基準の休止位置で初期化
+            handIKTarget.position = fpsCameraTransform.TransformPoint(handRestingOffset);
+            handIKTarget.rotation = fpsCameraTransform.rotation * Quaternion.Euler(_handIKTargetRotation);
+
+            // ドミノの初期相対位置を handIKTarget に対するオフセットで設定
             _dominoInitialRelativePosition = dominoSpawnOffset;
-            // handIKTargetの回転をdominoSpawnRotationOffsetで初期化
-            _handIKTargetRotation = Quaternion.Euler(dominoSpawnRotationOffset);
-            
-            _heldDomino.transform.position = handIKTarget.position + _dominoInitialRelativePosition;
-            _heldDomino.transform.rotation = Quaternion.Euler(dominoSpawnRotationOffset);
+
+            // ドミノを handIKTarget の位置 + 回転適用した相対位置に配置
+            _heldDomino.transform.position = handIKTarget.position + (handIKTarget.rotation * _dominoInitialRelativePosition);
+            _heldDomino.transform.rotation = handIKTarget.rotation * Quaternion.Euler(dominoSpawnRotationOffset);
         }
         else
         {
@@ -175,7 +180,7 @@ public class DominoPlacement : MonoBehaviour
         }
         float angleChange = Vector2.SignedAngle(_previousMouseDelta, _mouseDelta);
         //2/4追加　XとZ軸の回転量を調整して疑似的に水平回転を作りたい
-        handIKTarget.rotation *= Quaternion.Euler(angleChange * 0.5f, 0f, angleChange * 0.3f);
+        handIKTarget.rotation *= Quaternion.Euler(angleChange * xAxisAngle, 0f, angleChange * zAxisAngle);
     }
 
     //IKハンドルの重みと位置更新
@@ -191,7 +196,7 @@ public class DominoPlacement : MonoBehaviour
         Vector3 targetPos = fpsCameraTransform.TransformPoint(handRestingOffset);
         handIKTarget.position = Vector3.Lerp(handIKTarget.position, targetPos, Time.deltaTime * 5f);
         //handITTarget.rotationを直接いじる方針を試すためコメントアウト
-        //handIKTarget.rotation = fpsCameraTransform.rotation * Quaternion.Euler(150f,90f,90f);
+        handIKTarget.rotation = fpsCameraTransform.rotation * Quaternion.Euler(_handIKTargetRotation);
     }
 
     private void SetLayerRecursive(GameObject obj, int newLayer)
