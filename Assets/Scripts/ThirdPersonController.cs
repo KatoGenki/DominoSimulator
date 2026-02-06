@@ -153,16 +153,6 @@ namespace StarterAssets
                 // モードが切り替わったとき、または継続的に状態を同期
                 dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
             }
-            // // マウスの移動量を更新
-            // if (_input != null) _mouseDelta = _input.look;
-
-            // // 建築モード（Crawling）の時のみドミノ操作を実行
-            // bool isBuildingMode = (CurrentState != PlayerState.Standing);
-            // if (isBuildingMode && dominoPlacementManager != null)
-            // {
-            //     // 左クリックホールド(_placeDomino)中に移動と回転の両方を渡す
-            //     dominoPlacementManager.UpdatePlacementInput(_placeDomino, _mouseDelta);
-            // }
         }
 
         private void LateUpdate()
@@ -230,16 +220,26 @@ namespace StarterAssets
                 targetSpeed = isBuildingMode ? CrawlSpeed : (isSprinting ? SprintSpeed : MoveSpeed);
             }
 
-            // 2. 速度の補間
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-            float speedOffset = 0.1f;
-            if (Mathf.Abs(currentHorizontalSpeed - targetSpeed) > speedOffset)
+            // 2. 速度の適用（修正箇所）
+            if (isBuildingMode)
             {
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed, Time.deltaTime * SpeedChangeRate);
+                // 目標速度を代入
+                _speed = targetSpeed;
             }
             else
             {
-                _speed = targetSpeed;
+                // 通常移動時は、StarterAssets特有の滑らかな加速・減速を維持
+                float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+                float speedOffset = 0.1f;
+
+                if (Mathf.Abs(currentHorizontalSpeed - targetSpeed) > speedOffset)
+                {
+                    _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed, Time.deltaTime * SpeedChangeRate);
+                }
+                else
+                {
+                    _speed = targetSpeed;
+                }
             }
 
             // 3. アニメーターへの反映

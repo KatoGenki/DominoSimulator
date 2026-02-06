@@ -85,9 +85,8 @@ public class DominoPlacement : MonoBehaviour
             if (mouse.leftButton.isPressed)
             {
                 DetectCircularMotion();
-                // ドミノ自体の回転
-                _heldDomino.transform.rotation = Quaternion.Euler(dominoSpawnRotationOffset);
-                // ドミノ位置：handIKTarget + (回転適用した初期相対位置)
+                // handIKTarget の角度にオフセットを足す（簡単に調整可能）
+                _heldDomino.transform.rotation = Quaternion.Euler(handIKTarget.eulerAngles + dominoSpawnRotationOffset);
                 _heldDomino.transform.position = handIKTarget.position + (handIKTarget.rotation * _dominoInitialRelativePosition);
             }
 

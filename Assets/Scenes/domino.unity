@@ -2929,7 +2929,7 @@ MonoBehaviour:
     m_Bits: 8
   placementOffset: 0.5
   rotationSensitivity: 0.5
-  minMouseSpeed: 10
+  minMouseSpeed: 1
   fpsCameraTransform: {fileID: 1987249658}
   rightHandRig: {fileID: 1228310354}
   handIKTarget: {fileID: 1515163327}
@@ -2939,7 +2939,7 @@ MonoBehaviour:
   xAxisAngle: 0.12
   zAxisAngle: 0.1
   dominoSpawnOffset: {x: -0.15, y: 0.6, z: 0.15}
-  dominoSpawnRotationOffset: {x: 0, y: 90, z: 0}
+  dominoSpawnRotationOffset: {x: 140, y: 40, z: 90}
 --- !u!114 &963682449
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3794,6 +3794,10 @@ PrefabInstance:
       propertyPath: m_ApplyRootMotion
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5870174982614050327, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 3cb1addf8fb9e2542969d1dd00d2f594, type: 2}
     - target: {fileID: 6386480451222621022, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
       propertyPath: m_Layer
       value: 7
@@ -4773,13 +4777,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1239932607}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: 0.38268322, z: -0, w: 0.9238797}
   m_LocalPosition: {x: -3.9, y: 0.20403, z: 30.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 45, z: 0}
 --- !u!1 &1253733856
 GameObject:
   m_ObjectHideFlags: 0
@@ -5305,6 +5309,7 @@ GameObject:
   - component: {fileID: 1511047025}
   - component: {fileID: 1511047026}
   - component: {fileID: 1511047027}
+  - component: {fileID: 1511047028}
   m_Layer: 7
   m_Name: LeftHandCollider
   m_TagString: Untagged
@@ -5377,6 +5382,25 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
+--- !u!114 &1511047028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1511047024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77f901cc0f0e8234db7222bf87bae52b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DominoTrigger
+  ForceMagnitude: 1
+  IsActive: 1
+  _upwardOffset: 0.2
+  _torquePower: 0.5
+  DominoLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1 &1515163326
 GameObject:
   m_ObjectHideFlags: 0
@@ -5846,6 +5870,7 @@ GameObject:
   - component: {fileID: 1672945553}
   - component: {fileID: 1672945554}
   - component: {fileID: 1672945555}
+  - component: {fileID: 1672945556}
   m_Layer: 7
   m_Name: RightHandCollider
   m_TagString: Untagged
@@ -5890,7 +5915,7 @@ CapsuleCollider:
   m_Radius: 0.3
   m_Height: 3.2
   m_Direction: 1
-  m_Center: {x: 0, y: 0.7, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &1672945555
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -5918,6 +5943,25 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
+--- !u!114 &1672945556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1672945552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77f901cc0f0e8234db7222bf87bae52b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DominoTrigger
+  ForceMagnitude: 1
+  IsActive: 1
+  _upwardOffset: 0.2
+  _torquePower: 0.5
+  DominoLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1 &1683202016
 GameObject:
   m_ObjectHideFlags: 0
@@ -6395,7 +6439,7 @@ MonoBehaviour:
   _torquePower: 0.5
   DominoLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
 --- !u!54 &1722080454
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -6632,7 +6676,7 @@ MonoBehaviour:
   _torquePower: 0.5
   DominoLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
 --- !u!54 &1766280814
 Rigidbody:
   m_ObjectHideFlags: 0
