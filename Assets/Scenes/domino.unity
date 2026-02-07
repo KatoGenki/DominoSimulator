@@ -2929,7 +2929,7 @@ MonoBehaviour:
     m_Bits: 8
   placementOffset: 0.5
   rotationSensitivity: 0.5
-  minMouseSpeed: 1
+  minMouseSpeed: 5
   fpsCameraTransform: {fileID: 1987249658}
   rightHandRig: {fileID: 1228310354}
   handIKTarget: {fileID: 1515163327}
