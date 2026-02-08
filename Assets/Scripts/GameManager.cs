@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro; // UI用に追加
+using TMPro;
+using Cinemachine;
 
 namespace StarterAssets
 {
@@ -17,40 +18,32 @@ namespace StarterAssets
 
         [Header("Game State")]
         public GameState currentState = GameState.Build;
-        public int targetScore = 1000; 
+        public int targetScore = 1000;
 
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI _timerText;
         [SerializeField] private TextMeshProUGUI _stateText;
-        [SerializeField] private GameObject _resultPanel; // リザルト画面の親オブジェクト
+        [SerializeField] private GameObject _resultPanel;
 
         [Header("Timer Settings")]
         [SerializeField] private float _buildTimeLimit = 60f;
         private float _remainingTime;
         private bool _isTimerStopped = false;
 
-        [Header("Domino Monitoring")]
-        [SerializeField] private float _velocityThreshold = 0.05f;
-        [SerializeField] private float _stopDurationThreshold = 0.5f;
-        private List<NormalDomino> _activeDominoes = new List<NormalDomino>();
-        private Dictionary<NormalDomino, float> _stopTimers = new Dictionary<NormalDomino, float>();
+        [Header("ID Management")]
+        // インスタンスIDをキーに、配置された全ドミノを保持
+        private Dictionary<int, DominoBase> _dominoRegistry = new Dictionary<int, DominoBase>();
+        private int _instanceIdCounter = 0;
 
-        [Header("Finish Detection (Camera 2)")]
-        [SerializeField] private Camera _camera2;
+        [Header("Finish Detection")]
         [SerializeField] private float _finishWaitTime = 2.0f;
         private float _finishTimer = 0f;
-        private Plane[] _camera2Planes;
 
-        [Header("Cinemachine Settings")]
-        [SerializeField] private Cinemachine.CinemachineTargetGroup _targetGroup;
-
-        [Header("Extra Camera Settings")]
-        [SerializeField] private Cinemachine.CinemachineVirtualCamera _resultCamera;
-
-        [Header("Wipe Settings")]
+        [Header("Camera & Visuals")]
+        [SerializeField] private CinemachineTargetGroup _targetGroup;
+        [SerializeField] private CinemachineVirtualCamera _resultCamera;
         [SerializeField] private GameObject _wipeUI;
-
-        public List<NormalDomino> ActiveDominoes => _activeDominoes;
+        [SerializeField] private Camera _camera2; // 視界判定用
 
         private void Awake()
         {
@@ -63,11 +56,14 @@ namespace StarterAssets
             _remainingTime = _buildTimeLimit;
             currentState = GameState.Build;
             if (_resultPanel != null) _resultPanel.SetActive(false);
+            if (_wipeUI != null) _wipeUI.SetActive(false);
             UpdateUI();
         }
 
         private void Update()
         {
+            UpdateUI();
+
             switch (currentState)
             {
                 case GameState.Build:
@@ -75,37 +71,70 @@ namespace StarterAssets
                     break;
 
                 case GameState.Ready:
-                    UpdateActiveDominoes();
-                    CheckGameFinishCondition();
+                    CheckChainStatus();
                     break;
             }
-            
-            // 毎フレームUI（タイマーなど）を更新
-            UpdateUI();
         }
 
-        private void UpdateUI()
-        {
-            // タイマー表示の更新
-            if (_timerText != null)
-            {
-                if (currentState == GameState.Build)
-                    _timerText.text = $"Time: {_remainingTime:F1}s";
-                else
-                    _timerText.text = ""; // 設置フェーズ以外は非表示
-            }
+        // --- ID登録・管理システム ---
 
-            // ステート表示の更新
-            if (_stateText != null)
+        /// <summary>
+        /// ドミノが生成されたときに自分を登録し、個体識別用のInstanceIDを発行する
+        /// </summary>
+        public int RegisterDomino(DominoBase domino)
+        {
+            _instanceIdCounter++;
+            _dominoRegistry.Add(_instanceIdCounter, domino);
+            return _instanceIdCounter;
+        }
+
+        /// <summary>
+        /// 特定の種類(TypeID)のドミノが現在シーンにいくつあるか集計する
+        /// </summary>
+        public int GetCountByType(int typeID)
+        {
+            int count = 0;
+            foreach (var d in _dominoRegistry.Values)
             {
-                switch (currentState)
+                if (d.DominoTypeID == typeID) count++;
+            }
+            return count;
+        }
+
+        // --- 連鎖監視・終了判定 ---
+
+        private void CheckChainStatus()
+        {
+            bool anyMoving = false;
+
+            // 全てのドミノをループして動きをチェック
+            foreach (var domino in _dominoRegistry.Values)
+            {
+                if (domino == null) continue;
+                if (domino.IsMoving)
                 {
-                    case GameState.Build: _stateText.text = "Phase: Build"; break;
-                    case GameState.Ready: _stateText.text = "Phase: Domino Run!"; break;
-                    case GameState.Result: _stateText.text = "Finished!"; break;
+                    anyMoving = true;
+                    break;
                 }
             }
+
+            // 動いているドミノがない場合、終了タイマーを進める
+            // ※スコアが0（一度も倒れていない）場合は開始待ちなので除外
+            if (!anyMoving && ScoreManager.Instance != null && ScoreManager.Instance.totalScore > 0)
+            {
+                _finishTimer += Time.deltaTime;
+                if (_finishTimer >= _finishWaitTime)
+                {
+                    OnChainFinished();
+                }
+            }
+            else
+            {
+                _finishTimer = 0f;
+            }
         }
+
+        // --- モード切り替えロジック ---
 
         private void HandleBuildTimer()
         {
@@ -128,126 +157,59 @@ namespace StarterAssets
             if (player != null)
             {
                 player.CurrentState = ThirdPersonController.PlayerState.Standing;
-                player.ForceUpdateState();
+                // Controller側に強制更新メソッドがあれば呼ぶ
             }
-            Debug.Log("Time Up! Start Domino.");
-        }
-
-        public void RegisterActiveDomino(NormalDomino domino)
-        {
-            if (!_activeDominoes.Contains(domino))
-            {
-                _activeDominoes.Add(domino);
-                _stopTimers[domino] = 0f;
-                if (_targetGroup != null) _targetGroup.AddMember(domino.transform, 1f, 0.5f);
-            }
-        }
-
-        private void UpdateActiveDominoes()
-        {
-            for (int i = _activeDominoes.Count - 1; i >= 0; i--)
-            {
-                NormalDomino domino = _activeDominoes[i];
-                if (domino == null) continue;
-
-                Rigidbody rb = domino.GetComponent<Rigidbody>();
-                if (rb == null) continue;
-
-                if (rb.linearVelocity.magnitude < _velocityThreshold && 
-                    rb.angularVelocity.magnitude < _velocityThreshold)
-                {
-                    _stopTimers[domino] += Time.deltaTime;
-                }
-                else
-                {
-                    _stopTimers[domino] = 0f;
-                }
-
-                if (_stopTimers[domino] >= _stopDurationThreshold)
-                {
-                    if (_targetGroup != null) _targetGroup.RemoveMember(domino.transform);
-                    _activeDominoes.RemoveAt(i);
-                    _stopTimers.Remove(domino);
-                }
-            }
-        }
-
-        private void CheckGameFinishCondition()
-        {
-            if (ScoreManager.Instance != null && ScoreManager.Instance.GetCurrentScore() == 0) return;
-
-            if (_activeDominoes.Count == 0)
-            {
-                ProcessFinishTimer();
-                return;
-            }
-
-            _camera2Planes = GeometryUtility.CalculateFrustumPlanes(_camera2);
-            bool anyDominoInView = false;
-
-            foreach (var domino in _activeDominoes)
-            {
-                Collider col = domino.GetComponent<Collider>();
-                if (col == null) continue;
-
-                if (GeometryUtility.TestPlanesAABB(_camera2Planes, col.bounds))
-                {
-                    anyDominoInView = true;
-                    break;
-                }
-            }
-
-            if (!anyDominoInView) ProcessFinishTimer();
-            else _finishTimer = 0f;
-        }
-
-        private void ProcessFinishTimer()
-        {
-            _finishTimer += Time.deltaTime;
-            if (_finishTimer >= _finishWaitTime)
-            {
-                OnChainFinished();
-            }
-        }
-
-    public void UpdateCameraTarget(Transform newTarget)
-    {
-        if (_targetGroup != null)
-        {
-            // 既存のターゲットを一旦すべて削除（または0番目を差し替え）
-            while (_targetGroup.m_Targets.Length > 0)
-            {
-                _targetGroup.RemoveMember(_targetGroup.m_Targets[0].target);
-            }
-
-            // 新しく倒れたドミノを注視対象として追加
-            _targetGroup.AddMember(newTarget, 1f, 0f);
-        }
-    }
-        public void SwitchToResultCamera()
-        {
-            if (_resultCamera != null)
-            {
-                // プレイヤーのTPS/FPSカメラ(Priority 20)より高く設定して強制的に切り替える
-                _resultCamera.Priority = 30;
-            }
-
-            // 連鎖開始時にワイプを表示
-            if (_wipeUI != null) _wipeUI.SetActive(true);
+            Debug.Log("Time Up! Ready to start chain.");
         }
 
         private void OnChainFinished()
         {
+            if (currentState == GameState.Result) return;
+
             currentState = GameState.Result;
             _finishTimer = 0f;
-            
-            // リザルトパネルを表示
-            if (_resultPanel != null)
+
+            if (_resultPanel != null) _resultPanel.SetActive(true);
+            Debug.Log("Chain Finished! Displaying Results.");
+        }
+
+        // --- カメラ・UI操作 ---
+
+        public void UpdateCameraTarget(Transform newTarget)
+        {
+            if (_targetGroup == null) return;
+
+            // 以前のターゲットをクリアし、最新の倒れたドミノにフォーカス
+            var targets = _targetGroup.m_Targets;
+            for (int i = 0; i < targets.Length; i++)
             {
-                _resultPanel.SetActive(true);
+                _targetGroup.RemoveMember(targets[i].target);
             }
-            
-            Debug.Log("Chain Finished. Result Displayed.");
+            _targetGroup.AddMember(newTarget, 1f, 0f);
+        }
+
+        public void SwitchToResultCamera()
+        {
+            if (_resultCamera != null) _resultCamera.Priority = 30;
+            if (_wipeUI != null) _wipeUI.SetActive(true);
+        }
+
+        private void UpdateUI()
+        {
+            if (_timerText != null)
+            {
+                _timerText.text = (currentState == GameState.Build) ? $"Time: {_remainingTime:F1}s" : "";
+            }
+
+            if (_stateText != null)
+            {
+                switch (currentState)
+                {
+                    case GameState.Build: _stateText.text = "Phase: Build"; break;
+                    case GameState.Ready: _stateText.text = "Phase: Domino Run!"; break;
+                    case GameState.Result: _stateText.text = "Finished!"; break;
+                }
+            }
         }
 
         public float GetRemainingTime() => _remainingTime;

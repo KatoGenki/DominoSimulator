@@ -143,6 +143,7 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            PlayerRotate();
 
             // 1. 状態判定（isAnyCrawlなどは既存のロジックを使用）
             bool isAnyCrawl = CurrentState == PlayerState.CrawlingIdle || CurrentState == PlayerState.CrawlingMove;
@@ -291,6 +292,26 @@ namespace StarterAssets
                     CurrentState = PlayerState.Standing;
                 }
                 UpdateState();
+            }
+        }
+        //四つん這い時の回転処理
+        private void PlayerRotate()
+        {
+            // 四つん這い（設置モード）中のみ回転を許可
+            if (CurrentState != PlayerState.CrawlingIdle) return;
+
+            float rotationSpeed = 50f; // 1秒間に回転する度数
+
+            if (_input.rotateR)
+            {
+                // 押されている間、右に回転
+                transform.Rotate(0f, rotationSpeed * Time.deltaTime, 0f);
+            }
+            
+            if (_input.rotateL)
+            {
+                // 押されている間、左に回転
+                transform.Rotate(0f, -rotationSpeed * Time.deltaTime, 0f);
             }
         }
 

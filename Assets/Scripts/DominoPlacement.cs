@@ -6,7 +6,6 @@ using UnityEngine.Animations.Rigging;
 public class DominoPlacement : MonoBehaviour
 {
     [Header("参照")]
-    public GameObject dominoPrefab;
     public LayerMask Ground;
 
     [Header("設定")]
@@ -41,6 +40,7 @@ public class DominoPlacement : MonoBehaviour
     private Vector2 _mouseDelta;
     private Vector2 _previousMouseDelta;
 
+    
     void Update()
     {
         if (!_isPlacementModeActive) return;
@@ -53,7 +53,7 @@ public class DominoPlacement : MonoBehaviour
         // 1. 【開始】左クリックを押した瞬間にドミノを生成
         if (mouse.leftButton.wasPressedThisFrame && _heldDomino == null)
         {
-            SpawnDominoPreview();
+            SpawnDominoFromInventory();
             _isLeftClickHeld = true;
         }
 
@@ -108,12 +108,24 @@ public class DominoPlacement : MonoBehaviour
         _previousMouseDelta = _mouseDelta;
     }
 
-    private void SpawnDominoPreview()
+    private void SpawnDominoFromInventory()
     {
-        _heldDomino = Instantiate(dominoPrefab);
-        // 生成時はコライダーをオフ（自分との衝突回避）
-        var colliders = _heldDomino.GetComponentsInChildren<Collider>();
-        foreach (var col in colliders) col.enabled = false;
+        if (HUDManager.Instance == null) return;
+
+        // 現在HUDで選択されているドミノデータを取得
+        // 直接インベントリを参照する
+        int index = HUDManager.Instance.GetCurrentSelectedIndex(); 
+        GameObject selectedPrefab = HUDManager.Instance.dominoInventory[index].prefab;
+        DominoData data = HUDManager.Instance.dominoInventory[index];
+        // ★追加：在庫が0なら生成しない
+        if (data.currentCount <= 0 || data.prefab == null)
+        {
+            Debug.LogWarning($"{data.prefab} の在庫がありません！");
+            return;
+        }
+        if (selectedPrefab == null) return;
+
+        _heldDomino = Instantiate(selectedPrefab);
 
         Rigidbody rb = _heldDomino.GetComponent<Rigidbody>();
         if (rb) rb.isKinematic = true;
@@ -135,13 +147,13 @@ public class DominoPlacement : MonoBehaviour
         else
         {
             // フォールバック: マウス位置を基準にドミノを配置
-            Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-            if (Physics.Raycast(ray, out RaycastHit hit, 100f, Ground))
-            {
-                Vector3 targetPos = hit.point + Vector3.up * placementOffset;
-                _heldDomino.transform.position = targetPos;
-                handIKTarget.position = targetPos;
-            }
+            // Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+            // if (Physics.Raycast(ray, out RaycastHit hit, 100f, Ground))
+            // {
+            //     Vector3 targetPos = hit.point + Vector3.up * placementOffset;
+            //     _heldDomino.transform.position = targetPos;
+            //     handIKTarget.position = targetPos;
+            // }
         }
 
         Debug.Log("Domino Grabbed (Left Click)");
@@ -149,9 +161,18 @@ public class DominoPlacement : MonoBehaviour
 
     private void PlaceDomino()
     {
-        // コライダーを戻す
-        var colliders = _heldDomino.GetComponentsInChildren<Collider>();
-        foreach (var col in colliders) col.enabled = true;
+        // インベントリの在庫を1つ減らす
+        if (HUDManager.Instance != null)
+        {
+            int index = HUDManager.Instance.GetCurrentSelectedIndex();
+            var data = HUDManager.Instance.dominoInventory[index];
+
+            if (data.currentCount > 0)
+            {
+                data.currentCount--; // 残数をマイナス
+                HUDManager.Instance.UpdateInventoryUI(); // UI表示を更新（後述のメソッド）
+            }
+        }
 
         // レイヤーを戻す（エラー回避用チェック付き）
         int dominoLayer = LayerMask.NameToLayer("Domino");

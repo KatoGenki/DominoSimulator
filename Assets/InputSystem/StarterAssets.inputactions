@@ -77,6 +77,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "RotateR",
+                    "type": "Value",
+                    "id": "190287d3-80e9-43cb-9371-9834efa0f440",
+                    "expectedControlType": "Digital",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "RotateL",
+                    "type": "Value",
+                    "id": "cab831a0-5075-4711-b747-4102d73a9d27",
+                    "expectedControlType": "Digital",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -259,7 +277,7 @@
                 {
                     "name": "",
                     "id": "0d096c5d-d65b-44c9-936e-b3f0b2708065",
-                    "path": "<Keyboard>/e",
+                    "path": "<Keyboard>/tab",
                     "interactions": "",
                     "processors": "",
                     "groups": ";KeyboardMouse",
@@ -308,6 +326,28 @@
                     "processors": "",
                     "groups": ";KeyboardMouse",
                     "action": "PlaceMode",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b661ed6e-ac73-4770-b581-c999c9b607c6",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";KeyboardMouse",
+                    "action": "RotateR",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f4aa0992-334e-4c33-9ad7-f3e64cff9276",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";KeyboardMouse",
+                    "action": "RotateL",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

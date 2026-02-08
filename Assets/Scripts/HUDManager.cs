@@ -8,7 +8,6 @@ using StarterAssets;
 [System.Serializable]
 public class DominoData
 {
-    public string name;            // ドミノの名前
     public GameObject prefab;      // 設置するプレファブ
     public Sprite icon;            // HUDに表示するアイコン
     public int currentCount;       // 残量
@@ -22,7 +21,6 @@ public class HUDManager : MonoBehaviour
     public Image hotbarBackground;
     public RectTransform selector;
     public List<RectTransform> slots; // 既存の枠リスト
-    public Image handIcon;
 
     [Header("ドミノデータ管理")]
     public List<DominoData> dominoInventory; // ここにインスペクターでドミノを登録
@@ -39,20 +37,16 @@ public class HUDManager : MonoBehaviour
     private int _currentSelectedIndex = 0;
     //一度でも選択したかどうかのフラグ
     private bool _hasSelectedOnce = false;
-    private Vector3 _originalHandPos;
-    private Vector3 _targetHandPos;
 
     void Awake() 
-    {   //手のアイコンの位置を保存
-        if (handIcon != null) _originalHandPos = handIcon.rectTransform.localPosition;
+    {   
         //インスタンスをセット
         if (Instance == null) { Instance = this; } else { Destroy(gameObject); }
     }
 
     void Start()
-    {   // 起動時にセレクターと手のアイコンを非表示にする
+    {   // 起動時にセレクターを非表示にする
         if (selector != null) selector.gameObject.SetActive(false);
-        if (handIcon != null) handIcon.gameObject.SetActive(false);
         
         // 起動時にHUDの表示を最新にする
         RefreshAllSlots();
@@ -85,7 +79,7 @@ public class HUDManager : MonoBehaviour
         if (Keyboard.current != null)
         {
             for (int i = 0; i < slots.Count; i++)
-            {   //キーボードの
+            {   
                 if (Keyboard.current[Key.Digit1 + i].wasPressedThisFrame)
                 {
                     if (!_hasSelectedOnce) ShowSelector();
@@ -151,6 +145,26 @@ public class HUDManager : MonoBehaviour
             RefreshAllSlots(); // 表示を更新
         }
     }
+    public void UpdateInventoryUI()
+    {
+        // dominoInventory[i].currentCount の値を、各スロットにあるText等に反映させる処理
+        // 例：各スロットに個数表示用のTextMeshProUGUIがついている場合
+        
+        for (int i = 0; i < dominoInventory.Count; i++)
+        {
+            // slots[i] の子要素にあるTextコンポーネントを更新するようなイメージ
+            var countText = slots[i].GetComponentInChildren<TextMeshProUGUI>();
+            if (countText != null)
+            {
+                countText.text = dominoInventory[i].currentCount.ToString();
+            }
+        }
+        
+        
+        // デバッグログで確認
+        int index = _currentSelectedIndex;
+        Debug.Log($"{dominoInventory[index].prefab.name} 残り: {dominoInventory[index].currentCount}");
+    }
 
     public void UpdateScoreDisplay(int totalScore, int chain)
     {
@@ -171,6 +185,10 @@ public class HUDManager : MonoBehaviour
             timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
             timerText.alignment = TextAlignmentOptions.Right;
         }
+    }
+    public int GetCurrentSelectedIndex()
+    {
+        return _currentSelectedIndex;
     }
 
     public void SetTargetScoreUI(int target)
@@ -194,11 +212,7 @@ public class HUDManager : MonoBehaviour
         
         if(hotbarBackground != null) hotbarBackground.gameObject.SetActive(false);
 
-        // 3. 手のアイコン（設置用）を非表示にする
-        if (handIcon != null) handIcon.gameObject.SetActive(false);
-
-
-        // 4. チェーンテキストに開始の合図を出す（演出用）
+        // 3. チェーンテキストに開始の合図を出す（演出用）
         if (chainText != null)
         {
             chainText.text = "START CHAIN!";
@@ -212,7 +226,6 @@ public class HUDManager : MonoBehaviour
     void ShowSelector() { _hasSelectedOnce = true; if (selector != null) selector.gameObject.SetActive(true); UpdateSelectorPosition(); }
     void ChangeSlot(int direction) { _currentSelectedIndex = (int)Mathf.Repeat(_currentSelectedIndex + direction, slots.Count); UpdateSelectorPosition(); }
     void UpdateSelectorPosition() { if (_hasSelectedOnce && slots.Count > _currentSelectedIndex && selector != null) selector.position = slots[_currentSelectedIndex].position; }
-    public void SetHandIconVisible(bool isVisible) { if (handIcon != null) handIcon.gameObject.SetActive(isVisible); }
     public int GetSelectedSlotIndex() => _hasSelectedOnce ? _currentSelectedIndex : -1;
     public void UpdateHandShake(bool isHolding) { /* 既存の揺れ処理 */ }
 }

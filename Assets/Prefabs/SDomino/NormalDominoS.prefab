@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 4882945918912112350}
   - component: {fileID: -8566075295214695114}
   m_Layer: 6
-  m_Name: NormalDomino
+  m_Name: NormalDominoS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -153,4 +153,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd93f6dc78c702b41802bf3d05ba6b18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NormalDomino
+  _dominoTypeID: 1
   _scorePoint: 10
+  _toppleThreshold: 30
