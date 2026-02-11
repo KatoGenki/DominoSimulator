@@ -17,7 +17,7 @@ public class DominoPlacement : MonoBehaviour
     [Header("IK Settings")]
     [SerializeField] private Rig rightHandRig;
     [SerializeField] private Transform handIKTarget;
-    [SerializeField] private float weightLerpSpeed = 5f;
+    [SerializeField] private float weightLerpSpeed = 20f;
         [SerializeField] private Vector3 handRestingOffset = new Vector3(0.3f, -0.4f, 0.5f); // カメラからの相対位置
 
     [Header("Hand Offset Settings")]
@@ -32,6 +32,7 @@ public class DominoPlacement : MonoBehaviour
 
 
     private bool _isPlacementModeActive = false;
+    //ドミノを持っている間
     private GameObject _heldDomino;
 
     private Vector3 _dominoInitialRelativePosition = Vector3.zero;   // ドミノの初期相対位置
@@ -146,14 +147,7 @@ public class DominoPlacement : MonoBehaviour
         }
         else
         {
-            // フォールバック: マウス位置を基準にドミノを配置
-            // Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-            // if (Physics.Raycast(ray, out RaycastHit hit, 100f, Ground))
-            // {
-            //     Vector3 targetPos = hit.point + Vector3.up * placementOffset;
-            //     _heldDomino.transform.position = targetPos;
-            //     handIKTarget.position = targetPos;
-            // }
+            Debug.LogWarning("handIKTarget または fpsCameraTransform が設定されていません。");
         }
 
         Debug.Log("Domino Grabbed (Left Click)");
@@ -204,7 +198,7 @@ public class DominoPlacement : MonoBehaviour
     }
 
     //IKハンドルの重みと位置更新
-    private void UpdateIKWeight()
+    public void UpdateIKWeight()
     {
         if (rightHandRig == null) return;
         float targetWeight = (_heldDomino != null) ? 1f : 0f;

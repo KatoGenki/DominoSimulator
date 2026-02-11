@@ -28,17 +28,20 @@ public class CameraManager : MonoBehaviour
     }
     private void Update()
     {
-        // プレイヤーがいなければ何もしない（エラーを防ぐ）
-        if (ThirdPersonController == null || GameManager.Instance == null) return;
-        
-        if(ThirdPersonController.PlayerState.CrawlingIdle == ThirdPersonController.CurrentState|| ThirdPersonController.PlayerState.CrawlingMove == ThirdPersonController.CurrentState)
-        {
+        if (GameManager.Instance == null || ThirdPersonController == null) return;
+
+        // 現在が「設置モード」として振る舞うべき状況かを判定
+        bool isBuildingMode = GameManager.Instance.currentState == GameManager.GameState.Build && 
+                            (ThirdPersonController.CurrentState == ThirdPersonController.PlayerState.CrawlingIdle || 
+                            ThirdPersonController.CurrentState == ThirdPersonController.PlayerState.CrawlingMove);
+
+        if (isBuildingMode)
+        {   
             SwitchToFPSCamera();
         }
-
-        // 視界判定用カメラが必要ならここで処理を追加
-        if(GameManager.GameState.Ready == GameManager.Instance.currentState)
+        else
         {
+            SwitchToTPSCamera(); 
         }
     }
 
@@ -46,6 +49,12 @@ public class CameraManager : MonoBehaviour
     {
         if (_FPSCamera != null) _FPSCamera.Priority = 20;
         if (_TPSCamera != null) _TPSCamera.Priority = 10;
+    }
+
+    private void SwitchToTPSCamera()
+    {
+        if (_TPSCamera != null) _TPSCamera.Priority = 20;
+        if (_FPSCamera != null) _FPSCamera.Priority = 10;
     }
     public void UpdateCameraTarget(Transform newTarget)
     {

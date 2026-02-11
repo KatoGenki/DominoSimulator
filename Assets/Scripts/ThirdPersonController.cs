@@ -43,6 +43,7 @@ namespace StarterAssets
 
         [Header("Player Grounded")]
         public bool Grounded = true;
+        public bool isAnyCrawl = false;
         public float GroundedOffset = -0.14f;
         public float GroundedRadius = 0.28f;
         public LayerMask GroundLayers;
@@ -93,6 +94,7 @@ namespace StarterAssets
         private CharacterController _controller;
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
+        private DominoPlacement _dominoPlacement;
 
         private const float _threshold = 0.01f;
         private bool _hasAnimator;
@@ -123,6 +125,7 @@ namespace StarterAssets
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
+            _dominoPlacement = GetComponent<DominoPlacement>();
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
 #endif
@@ -144,6 +147,7 @@ namespace StarterAssets
             GroundedCheck();
             Move();
             PlayerRotate();
+            _dominoPlacement.UpdateIKWeight();
 
             // 1. 状態判定（isAnyCrawlなどは既存のロジックを使用）
             bool isAnyCrawl = CurrentState == PlayerState.CrawlingIdle || CurrentState == PlayerState.CrawlingMove;
@@ -283,7 +287,7 @@ namespace StarterAssets
             if (_input.buildMode)
             {
                 _input.buildMode = false;
-                if (CurrentState == PlayerState.Standing)
+                if (CurrentState == PlayerState.Standing && GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Build)
                 {
                     if (Grounded) CurrentState = PlayerState.CrawlingIdle;
                 }
@@ -384,16 +388,12 @@ namespace StarterAssets
                 {
                     _controller.detectCollisions = true;
                 }
-            
-            // カメラの切り替え
-            // FPSCamera.Priority = isAnyCrawl ? 20 : 10;
-            // TPSCamera.Priority = isAnyCrawl ? 10 : 20;
 
             // 設置モードの有効化
             if (dominoPlacementManager != null) 
                 dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
 
-            // ★修正箇所：状態に関わらず常にトリガーを有効にする
+            //状態に関わらず常にトリガーを有効にする
             if (handFootTriggers != null)
             {
                 foreach (var trigger in handFootTriggers) 
@@ -401,6 +401,7 @@ namespace StarterAssets
                     trigger.IsActive = true; // 常時 true に設定
                 }
             }
+
         }
 
         // Animator Events

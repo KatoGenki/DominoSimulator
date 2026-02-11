@@ -44,6 +44,7 @@ namespace StarterAssets
         [SerializeField] private CinemachineVirtualCamera _resultCamera;
         [SerializeField] private GameObject _wipeUI;
         [SerializeField] private Camera _camera2; // 視界判定用
+        CameraManager CameraManager;
 
         private void Awake()
         {
@@ -157,7 +158,6 @@ namespace StarterAssets
             if (player != null)
             {
                 player.CurrentState = ThirdPersonController.PlayerState.Standing;
-                // Controller側に強制更新メソッドがあれば呼ぶ
             }
             Debug.Log("Time Up! Ready to start chain.");
         }

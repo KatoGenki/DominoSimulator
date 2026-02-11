@@ -1333,7 +1333,7 @@ Transform:
   m_GameObject: {fileID: 583943573}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000003332001, y: 0.000000041330658, z: -1.3771379e-15, w: 1}
-  m_LocalPosition: {x: 17.527868, y: 7.0906973, z: -2.2351198}
+  m_LocalPosition: {x: 17.527868, y: 7.240697, z: -2.2351198}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1620,7 +1620,7 @@ Transform:
   m_GameObject: {fileID: 642126706}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000003332001, y: 0.000000041330658, z: -1.3771379e-15, w: 1}
-  m_LocalPosition: {x: 17.527868, y: 7.0906973, z: -2.2351198}
+  m_LocalPosition: {x: 17.527868, y: 7.240697, z: -2.2351198}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2768,6 +2768,7 @@ MonoBehaviour:
   JumpTimeout: 0.3
   FallTimeout: 0.15
   Grounded: 1
+  isAnyCrawl: 0
   GroundedOffset: -0.14
   GroundedRadius: 0.28
   GroundLayers:
@@ -4046,7 +4047,7 @@ Transform:
   m_GameObject: {fileID: 1102695960}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000003332001, y: 0.000000041330658, z: -1.3771379e-15, w: 1}
-  m_LocalPosition: {x: 17.527868, y: 7.0906973, z: -2.2351198}
+  m_LocalPosition: {x: 17.527868, y: 7.240697, z: -2.2351198}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7200,7 +7201,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Cinemachine::Cinemachine.Cinemachine3rdPersonFollow
   Damping: {x: 0, y: 0, z: 0}
-  ShoulderOffset: {x: 0, y: -0.76, z: 0}
+  ShoulderOffset: {x: 0, y: -0.61, z: 0}
   VerticalArmLength: 0.4
   CameraSide: 1
   CameraDistance: 12
