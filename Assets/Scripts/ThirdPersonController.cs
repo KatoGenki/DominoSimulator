@@ -386,8 +386,8 @@ namespace StarterAssets
                 }
             
             // カメラの切り替え
-            FPSCamera.Priority = isAnyCrawl ? 20 : 10;
-            TPSCamera.Priority = isAnyCrawl ? 10 : 20;
+            // FPSCamera.Priority = isAnyCrawl ? 20 : 10;
+            // TPSCamera.Priority = isAnyCrawl ? 10 : 20;
 
             // 設置モードの有効化
             if (dominoPlacementManager != null) 

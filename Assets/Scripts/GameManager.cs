@@ -173,27 +173,7 @@ namespace StarterAssets
             Debug.Log("Chain Finished! Displaying Results.");
         }
 
-        // --- カメラ・UI操作 ---
-
-        public void UpdateCameraTarget(Transform newTarget)
-        {
-            if (_targetGroup == null) return;
-
-            // 以前のターゲットをクリアし、最新の倒れたドミノにフォーカス
-            var targets = _targetGroup.m_Targets;
-            for (int i = 0; i < targets.Length; i++)
-            {
-                _targetGroup.RemoveMember(targets[i].target);
-            }
-            _targetGroup.AddMember(newTarget, 1f, 0f);
-        }
-
-        public void SwitchToResultCamera()
-        {
-            if (_resultCamera != null) _resultCamera.Priority = 30;
-            if (_wipeUI != null) _wipeUI.SetActive(true);
-        }
-
+        //UI操作
         private void UpdateUI()
         {
             if (_timerText != null)

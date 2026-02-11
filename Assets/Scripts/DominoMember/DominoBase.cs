@@ -17,6 +17,7 @@ public abstract class DominoBase : MonoBehaviour
     
     protected bool _isToppled = false;
     protected Rigidbody _rb;
+    CameraManager CameraManager;
 
     // 物理的に動いているかの判定
     public bool IsMoving => _rb != null && _rb.linearVelocity.magnitude > 0.05f;
@@ -46,8 +47,8 @@ public abstract class DominoBase : MonoBehaviour
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.AddScore(_scorePoint, transform.position.y, this.transform);
 
-        if (GameManager.Instance != null)
-            GameManager.Instance.UpdateCameraTarget(this.transform);
+        if (CameraManager != null)
+            CameraManager.UpdateCameraTarget(this.transform);
         
         Debug.Log($"Type:{DominoTypeID} / Instance:{InstanceID} が倒れました");
     }

@@ -15,6 +15,8 @@ public class ScoreManager : MonoBehaviour
     [Header("ボーナス倍率設定")]
     [Tooltip("1連鎖ごとに加算される倍率（例：0.01の場合、100連鎖で+1倍）")]
     public float chainBonusStep = 0.01f;
+    CameraManager CameraManager;
+
     //起動時に呼ばれる関数
     void Awake()
     {   //インスタンスがnullであれば、自分をセット、そうでなければ自分を破棄
@@ -54,9 +56,9 @@ public class ScoreManager : MonoBehaviour
 
         Debug.Log($"[Score] {name} 倒れた! +{addValue}pt (連鎖倍率:+{currentChainBonus} )");
 
-        if (GameManager.Instance != null)
+        if (CameraManager != null)
         {
-            GameManager.Instance.UpdateCameraTarget(fallenDominoTransform);
+            CameraManager.UpdateCameraTarget(fallenDominoTransform);
         }
 
     }

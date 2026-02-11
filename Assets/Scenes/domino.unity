@@ -4870,6 +4870,56 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -2709793182783671460, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
   m_PrefabInstance: {fileID: 1065915506}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1343936300
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1343936302}
+  - component: {fileID: 1343936301}
+  m_Layer: 0
+  m_Name: CameraManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1343936301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1343936300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23d9d44c4d69dba4589c9d34a4197b06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraManager
+  _FPSCamera: {fileID: 1987249659}
+  _TPSCamera: {fileID: 583943574}
+  _targetGroup: {fileID: 1102682227}
+  _resultCamera: {fileID: 1216405511}
+  _wipeUI: {fileID: 0}
+  _camera2: {fileID: 1102695962}
+--- !u!4 &1343936302
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1343936300}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.50953, y: 0.20403, z: -1.1625}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1350947784 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8069032694317455793, guid: 16a99f43ef23b5f498b687b0cdb8073d, type: 3}
@@ -6737,11 +6787,11 @@ MonoBehaviour:
   _timerText: {fileID: 1421986025}
   _stateText: {fileID: 0}
   _resultPanel: {fileID: 0}
-  _buildTimeLimit: 1000
+  _buildTimeLimit: 30
   _finishWaitTime: 2
   _targetGroup: {fileID: 1102682227}
   _resultCamera: {fileID: 1216405511}
-  _wipeUI: {fileID: 0}
+  _wipeUI: {fileID: 1747753005}
   _camera2: {fileID: 1102695962}
 --- !u!4 &1792859381
 Transform:
@@ -7725,3 +7775,4 @@ SceneRoots:
   - {fileID: 1239932611}
   - {fileID: 1065915506}
   - {fileID: 1931061291}
+  - {fileID: 1343936302}
