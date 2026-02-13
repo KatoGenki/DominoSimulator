@@ -16,6 +16,7 @@ namespace StarterAssets
         public bool place;         // ドミノのホールド/設置用 (マウス左クリック)
 		public bool rotateR = false;    // 右回転
 		public bool rotateL = false;	// 左回転
+		public bool kick = false;		// キックアクション
 
 		[Header("Movement Settings")]
 		public bool analogMovement;
@@ -131,7 +132,15 @@ namespace StarterAssets
 			rotateMode = value.isPressed;
 		}
 		#endif
-	}
+
+		public void OnKick(InputValue value)
+		{
+			KickInput(value.isPressed);
+		}
+		public void KickInput(bool newKickState)
+		{
+			kick = newKickState;
+		}
 	
-	
+	}	
 }

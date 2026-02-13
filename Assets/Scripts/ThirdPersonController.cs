@@ -84,6 +84,8 @@ namespace StarterAssets
         private int _animIDMotionSpeed;
         private int _animIDIsBuilding;
         private int _animIDIdCrawling;
+        private int _animIDReady;
+        private int _animIDKick;
 
         private DominoTrigger[] handFootTriggers; 
 
@@ -95,9 +97,11 @@ namespace StarterAssets
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
         private DominoPlacement _dominoPlacement;
+        private GameManager _gameManager;
 
         private const float _threshold = 0.01f;
         private bool _hasAnimator;
+        private bool Ready = false;
 
         private bool IsCurrentDeviceMouse
         {
@@ -126,6 +130,7 @@ namespace StarterAssets
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
             _dominoPlacement = GetComponent<DominoPlacement>();
+            _gameManager = GetComponent<GameManager>();
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
 #endif
@@ -158,6 +163,9 @@ namespace StarterAssets
                 // モードが切り替わったとき、または継続的に状態を同期
                 dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
             }
+
+            //Ready状態だったらキックを再生可能
+            StartToChain();
         }
 
         private void LateUpdate()
@@ -173,7 +181,9 @@ namespace StarterAssets
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
             _animIDIsBuilding = Animator.StringToHash("IsBuilding"); 
-            _animIDIdCrawling = Animator.StringToHash("IsCrawling"); 
+            _animIDIdCrawling = Animator.StringToHash("IsCrawling");
+            _animIDReady = Animator.StringToHash("Ready");
+            _animIDKick = Animator.StringToHash("Kick"); 
         }
 
         private void GroundedCheck()
@@ -401,6 +411,23 @@ namespace StarterAssets
                     trigger.IsActive = true; // 常時 true に設定
                 }
             }
+
+        }
+
+        //キックで連鎖開始
+        private void StartToChain()
+        {
+            Ready = (CurrentState == PlayerState.Standing) && (GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Ready);
+            if (_hasAnimator && _input.kick && Ready)
+            {
+                _animator.SetBool(_animIDReady, Ready); 
+            }
+
+            if (Ready && _input.kick)
+            {
+                _animator.SetTrigger(_animIDKick); 
+            }
+            _input.kick = false;
 
         }
 
