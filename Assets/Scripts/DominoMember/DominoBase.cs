@@ -18,7 +18,8 @@ public abstract class DominoBase : MonoBehaviour
     protected bool _isToppled = false;
     protected Rigidbody _rb;
     CameraManager CameraManager;
-
+    //設置時の角度を記録するための変数
+    private Quaternion _initialRotation;
     // 物理的に動いているかの判定
     public bool IsMoving => _rb != null && _rb.linearVelocity.magnitude > 0.05f;
 
@@ -26,6 +27,7 @@ public abstract class DominoBase : MonoBehaviour
 
     protected virtual void Start()
     {
+        _initialRotation = transform.rotation;
         if (GameManager.Instance != null)
         {
             // GameManagerから自分だけのInstanceIDをもらう
@@ -35,8 +37,13 @@ public abstract class DominoBase : MonoBehaviour
 
     protected virtual void Update()
     {
-        if (!_isToppled && Vector3.Angle(Vector3.up, transform.up) > _toppleThreshold)
+        //「初期の回転」と「現在の回転」の間の角度差（degree）を計算
+        float angleDiff = Quaternion.Angle(_initialRotation, transform.rotation);
+
+        //差分がしきい値を超えたら「倒れた」とみなす
+        if (!_isToppled && angleDiff > _toppleThreshold)
         {
+            //Debug.Log($"[DominoBase] {name} が倒れ始めました！変化した角度: {angleDiff}");
             _isToppled = true;
             OnToppled();
         }
@@ -44,12 +51,11 @@ public abstract class DominoBase : MonoBehaviour
 
     protected virtual void OnToppled()
     {
+        //Debug.Log($"[DominoBase] {name} が倒れました！");
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.AddScore(_scorePoint, transform.position.y, this.transform);
 
         if (CameraManager != null)
             CameraManager.UpdateCameraTarget(this.transform);
-        
-        Debug.Log($"Type:{DominoTypeID} / Instance:{InstanceID} が倒れました");
     }
 }

@@ -186,10 +186,9 @@ public class DominoPlacement : MonoBehaviour
 
     private void DetectCircularMotion()
     {
-        Debug.Log($"{handIKTarget.rotation}");
+        // マウスの動きが一定以上でない場合は回転させない（ノイズ防止）
         if (_mouseDelta.magnitude < minMouseSpeed || _previousMouseDelta.magnitude < minMouseSpeed) 
         {
-            Debug.Log("Mouse movement too small to detect rotation.");
             return;
         }
         float angleChange = Vector2.SignedAngle(_previousMouseDelta, _mouseDelta);

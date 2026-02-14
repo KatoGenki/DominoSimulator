@@ -13,6 +13,11 @@ public class StartDominoWatcher : MonoBehaviour
     [Header("検知設定")]
     [SerializeField] private float _startAngleThreshold = 2.0f; // 2度傾いたら開始とみなす
 
+    void Awake()
+    {
+        // シーン内のCameraManagerを探して参照を取得
+        CameraManager = Object.FindFirstObjectByType<CameraManager>();
+    }
     void Start()
     {
         // アタッチされた瞬間の角度を記録
@@ -46,6 +51,7 @@ public class StartDominoWatcher : MonoBehaviour
         // 2. カメラの切り替え（CameraManager側にカメラ優先度変更メソッドがある想定）
         if (CameraManager != null)
         {
+            //Debug.Log("StartDominoWatcher: カメラを結果演出用に切り替えます。");
             CameraManager.SwitchToResultCamera();
         }
     }

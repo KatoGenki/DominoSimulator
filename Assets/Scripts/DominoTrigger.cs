@@ -9,7 +9,7 @@ public class DominoTrigger : MonoBehaviour
     [SerializeField] private float _upwardOffset = 0.2f;
     public LayerMask DominoLayer;
 
-    private Collider _myCollider; // 追加：自身のコライダー参照用
+    private Collider _myCollider; //自身のコライダー参照用
 
     private void Start()
     {
@@ -55,9 +55,8 @@ public class DominoTrigger : MonoBehaviour
         Rigidbody rb = other.attachedRigidbody;
         if (rb == null || rb.isKinematic) return;
 
-        // 1. マウスの動きを取得
-        var mouse = Mouse.current;
-        Vector3 screenMouseDelta = mouse.delta.ReadValue();
+        // コライダーの向きを取得        
+        Vector3 colliderForward = transform.forward;
 
         // 2. 速度の初期化
         rb.linearVelocity = Vector3.zero;
@@ -67,6 +66,6 @@ public class DominoTrigger : MonoBehaviour
         Vector3 hitPoint = other.transform.position + (Vector3.up * _upwardOffset);
 
         // 4. 衝撃力を加える
-        rb.AddForceAtPosition(screenMouseDelta * ForceMagnitude, hitPoint, ForceMode.Impulse);
+        rb.AddForceAtPosition(colliderForward * ForceMagnitude, hitPoint, ForceMode.Impulse);
     }
 }

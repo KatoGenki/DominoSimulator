@@ -228,14 +228,28 @@ namespace StarterAssets
             bool isBuildingMode = (CurrentState != PlayerState.Standing);
             bool isSprinting = _input.sprint && !isBuildingMode;
 
-            // 1. 目標速度の決定
+            //Kickアニメーション再生中は移動処理をスキップ
+            if (_hasAnimator)
+            {
+                // "Kick" という名前の状態（State）を再生中か確認
+                // ※Animator上のステート名が "Kick" であることを想定しています
+                AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+                if (stateInfo.IsName("Kick"))
+                {
+                    // 移動速度を0にして、以降の処理を行わない
+                    _speed = 0f;
+                    _animator.SetFloat(_animIDSpeed, 0f);
+                    return; 
+                }
+            }
+            //目標速度の決定
             float targetSpeed = 0.0f;
             if (hasMoveInput)
             {
                 targetSpeed = isBuildingMode ? CrawlSpeed : (isSprinting ? SprintSpeed : MoveSpeed);
             }
 
-            // 2. 速度の適用（修正箇所）
+            //速度の適用
             if (isBuildingMode)
             {
                 // 目標速度を代入
@@ -243,7 +257,7 @@ namespace StarterAssets
             }
             else
             {
-                // 通常移動時は、StarterAssets特有の滑らかな加速・減速を維持
+            //通常移動時は、StarterAssets特有の滑らかな加速・減速を維持
                 float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
                 float speedOffset = 0.1f;
 
@@ -257,7 +271,7 @@ namespace StarterAssets
                 }
             }
 
-            // 3. アニメーターへの反映
+            //アニメーターへの反映
             if (_hasAnimator)
             {
                 _animator.SetBool(_animIDIsBuilding, isBuildingMode);
@@ -266,7 +280,7 @@ namespace StarterAssets
                 _animator.SetFloat(_animIDMotionSpeed, hasMoveInput ? 1f : 0f);
             }
 
-            // 4. 回転と移動方向
+            //回転と移動方向
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
 
             if (!isBuildingMode)
@@ -287,7 +301,7 @@ namespace StarterAssets
                 transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
             }
 
-            // 5. 移動の実行
+            //移動の実行
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * (!isBuildingMode ? Vector3.forward : inputDirection);
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
         }

@@ -31,6 +31,7 @@ public class ScoreManager : MonoBehaviour
     /// <param name="height">倒れた瞬間の高さ</param>
     public void AddScore(int basePoint, float height, Transform fallenDominoTransform)
     {
+        //Debug.Log("AddScore呼ばれた！");
         // GameManagerが見つからない、もしくは制限時間内の場合はスコア加算を行わない
         if (GameManager.Instance == null || GameManager.Instance.currentState == GameManager.GameState.Build)
         {
@@ -54,7 +55,7 @@ public class ScoreManager : MonoBehaviour
             HUDManager.Instance.UpdateScoreDisplay(totalScore, chainCount);
         }
 
-        Debug.Log($"[Score] {name} 倒れた! +{addValue}pt (連鎖倍率:+{currentChainBonus} )");
+        //Debug.Log($"[Score] {name} 倒れた! +{addValue}pt (連鎖倍率:+{currentChainBonus} )");
 
         if (CameraManager != null)
         {

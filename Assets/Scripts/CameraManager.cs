@@ -71,6 +71,7 @@ public class CameraManager : MonoBehaviour
 
     public void SwitchToResultCamera()
     {
+        Debug.Log("カメラを結果演出用に切り替えました");
         if (_resultCamera != null) _resultCamera.Priority = 30;
         if (_wipeUI != null) _wipeUI.SetActive(true);
     }
