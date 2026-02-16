@@ -23,8 +23,10 @@ public abstract class DominoBase : MonoBehaviour
     // 物理的に動いているかの判定
     public bool IsMoving => _rb != null && _rb.linearVelocity.magnitude > 0.05f;
 
-    protected virtual void Awake() => _rb = GetComponent<Rigidbody>();
-
+    protected virtual void Awake()
+    {
+        _rb = GetComponent<Rigidbody>();
+    }
     protected virtual void Start()
     {
         _initialRotation = transform.rotation;
@@ -55,7 +57,5 @@ public abstract class DominoBase : MonoBehaviour
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.AddScore(_scorePoint, transform.position.y, this.transform);
 
-        if (CameraManager != null)
-            CameraManager.UpdateCameraTarget(this.transform);
     }
 }

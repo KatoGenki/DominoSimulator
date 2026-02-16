@@ -58,8 +58,11 @@ public class CameraManager : MonoBehaviour
     }
     public void UpdateCameraTarget(Transform newTarget)
     {
-        if (_targetGroup == null) return;
-
+        if (_targetGroup == null)
+        {
+            Debug.LogWarning("CameraManager: TargetGroupが設定されていません！");
+            return;
+        } 
         // 以前のターゲットをクリアし、最新の倒れたドミノにフォーカス
         var targets = _targetGroup.m_Targets;
         for (int i = 0; i < targets.Length; i++)
@@ -71,7 +74,7 @@ public class CameraManager : MonoBehaviour
 
     public void SwitchToResultCamera()
     {
-        Debug.Log("カメラを結果演出用に切り替えました");
+        // Debug.Log("カメラを結果演出用に切り替えました");
         if (_resultCamera != null) _resultCamera.Priority = 30;
         if (_wipeUI != null) _wipeUI.SetActive(true);
     }

@@ -22,6 +22,7 @@ public class ScoreManager : MonoBehaviour
     {   //インスタンスがnullであれば、自分をセット、そうでなければ自分を破棄
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+        CameraManager = Object.FindFirstObjectByType<CameraManager>();
     }
 
     /// <summary>
