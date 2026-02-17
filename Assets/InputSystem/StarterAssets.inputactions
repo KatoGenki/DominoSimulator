@@ -61,7 +61,7 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "PlaceDomino",
+                    "name": "RotateMode",
                     "type": "Value",
                     "id": "d0b452ba-1564-4802-929b-166110a8fb6f",
                     "expectedControlType": "",
@@ -70,9 +70,36 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "RotateMode",
+                    "name": "PlaceMode",
                     "type": "Button",
                     "id": "ccc6746b-3eff-4a54-86af-2413a829b85c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RotateR",
+                    "type": "Value",
+                    "id": "190287d3-80e9-43cb-9371-9834efa0f440",
+                    "expectedControlType": "Digital",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "RotateL",
+                    "type": "Value",
+                    "id": "cab831a0-5075-4711-b747-4102d73a9d27",
+                    "expectedControlType": "Digital",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Kick",
+                    "type": "Button",
+                    "id": "d853feec-eac7-4c73-b7b0-187f66e8b87c",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -259,7 +286,7 @@
                 {
                     "name": "",
                     "id": "0d096c5d-d65b-44c9-936e-b3f0b2708065",
-                    "path": "<Keyboard>/e",
+                    "path": "<Keyboard>/tab",
                     "interactions": "",
                     "processors": "",
                     "groups": ";KeyboardMouse",
@@ -296,17 +323,6 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";KeyboardMouse",
-                    "action": "PlaceDomino",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "92c05d21-6910-43b5-aac4-d043472e1ef9",
-                    "path": "",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
                     "action": "RotateMode",
                     "isComposite": false,
                     "isPartOfComposite": false
@@ -318,7 +334,40 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";KeyboardMouse",
-                    "action": "RotateMode",
+                    "action": "PlaceMode",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b661ed6e-ac73-4770-b581-c999c9b607c6",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";KeyboardMouse",
+                    "action": "RotateR",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f4aa0992-334e-4c33-9ad7-f3e64cff9276",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";KeyboardMouse",
+                    "action": "RotateL",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "172d3bd6-f7c2-4683-b1e5-7abc0263da96",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Kick",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

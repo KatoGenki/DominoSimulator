@@ -43,6 +43,7 @@ namespace StarterAssets
 
         [Header("Player Grounded")]
         public bool Grounded = true;
+        public bool isAnyCrawl = false;
         public float GroundedOffset = -0.14f;
         public float GroundedRadius = 0.28f;
         public LayerMask GroundLayers;
@@ -83,6 +84,8 @@ namespace StarterAssets
         private int _animIDMotionSpeed;
         private int _animIDIsBuilding;
         private int _animIDIdCrawling;
+        private int _animIDReady;
+        private int _animIDKick;
 
         private DominoTrigger[] handFootTriggers; 
 
@@ -93,9 +96,12 @@ namespace StarterAssets
         private CharacterController _controller;
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
+        private DominoPlacement _dominoPlacement;
+        private GameManager _gameManager;
 
         private const float _threshold = 0.01f;
         private bool _hasAnimator;
+        private bool Ready = false;
 
         private bool IsCurrentDeviceMouse
         {
@@ -123,6 +129,8 @@ namespace StarterAssets
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
+            _dominoPlacement = GetComponent<DominoPlacement>();
+            _gameManager = GetComponent<GameManager>();
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
 #endif
@@ -143,17 +151,21 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            PlayerRotate();
+            _dominoPlacement.UpdateIKWeight();
 
-            // マウスの移動量を更新
-            if (_input != null) _mouseDelta = _input.look;
+            // 1. 状態判定（isAnyCrawlなどは既存のロジックを使用）
+            bool isAnyCrawl = CurrentState == PlayerState.CrawlingIdle || CurrentState == PlayerState.CrawlingMove;
 
-            // 建築モード（Crawling）の時のみドミノ操作を実行
-            bool isBuildingMode = (CurrentState != PlayerState.Standing);
-            if (isBuildingMode && dominoPlacementManager != null)
+            // 2. 設置モードの有効化/無効化の切り替え
+            if (dominoPlacementManager != null) 
             {
-                // 左クリックホールド(_placeDomino)中に移動と回転の両方を渡す
-                dominoPlacementManager.UpdatePlacementInput(_placeDomino, _mouseDelta);
+                // モードが切り替わったとき、または継続的に状態を同期
+                dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
             }
+
+            //Ready状態だったらキックを再生可能
+            StartToChain();
         }
 
         private void LateUpdate()
@@ -169,7 +181,9 @@ namespace StarterAssets
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
             _animIDIsBuilding = Animator.StringToHash("IsBuilding"); 
-            _animIDIdCrawling = Animator.StringToHash("IsCrawling"); 
+            _animIDIdCrawling = Animator.StringToHash("IsCrawling");
+            _animIDReady = Animator.StringToHash("Ready");
+            _animIDKick = Animator.StringToHash("Kick"); 
         }
 
         private void GroundedCheck()
@@ -214,26 +228,50 @@ namespace StarterAssets
             bool isBuildingMode = (CurrentState != PlayerState.Standing);
             bool isSprinting = _input.sprint && !isBuildingMode;
 
-            // 1. 目標速度の決定
+            //Kickアニメーション再生中は移動処理をスキップ
+            if (_hasAnimator)
+            {
+                // "Kick" という名前の状態（State）を再生中か確認
+                // ※Animator上のステート名が "Kick" であることを想定しています
+                AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+                if (stateInfo.IsName("Kick"))
+                {
+                    // 移動速度を0にして、以降の処理を行わない
+                    _speed = 0f;
+                    _animator.SetFloat(_animIDSpeed, 0f);
+                    return; 
+                }
+            }
+            //目標速度の決定
             float targetSpeed = 0.0f;
             if (hasMoveInput)
             {
                 targetSpeed = isBuildingMode ? CrawlSpeed : (isSprinting ? SprintSpeed : MoveSpeed);
             }
 
-            // 2. 速度の補間
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-            float speedOffset = 0.1f;
-            if (Mathf.Abs(currentHorizontalSpeed - targetSpeed) > speedOffset)
+            //速度の適用
+            if (isBuildingMode)
             {
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed, Time.deltaTime * SpeedChangeRate);
+                // 目標速度を代入
+                _speed = targetSpeed;
             }
             else
             {
-                _speed = targetSpeed;
+            //通常移動時は、StarterAssets特有の滑らかな加速・減速を維持
+                float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+                float speedOffset = 0.1f;
+
+                if (Mathf.Abs(currentHorizontalSpeed - targetSpeed) > speedOffset)
+                {
+                    _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed, Time.deltaTime * SpeedChangeRate);
+                }
+                else
+                {
+                    _speed = targetSpeed;
+                }
             }
 
-            // 3. アニメーターへの反映
+            //アニメーターへの反映
             if (_hasAnimator)
             {
                 _animator.SetBool(_animIDIsBuilding, isBuildingMode);
@@ -242,7 +280,7 @@ namespace StarterAssets
                 _animator.SetFloat(_animIDMotionSpeed, hasMoveInput ? 1f : 0f);
             }
 
-            // 4. 回転と移動方向
+            //回転と移動方向
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
 
             if (!isBuildingMode)
@@ -263,7 +301,7 @@ namespace StarterAssets
                 transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
             }
 
-            // 5. 移動の実行
+            //移動の実行
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * (!isBuildingMode ? Vector3.forward : inputDirection);
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
         }
@@ -273,7 +311,7 @@ namespace StarterAssets
             if (_input.buildMode)
             {
                 _input.buildMode = false;
-                if (CurrentState == PlayerState.Standing)
+                if (CurrentState == PlayerState.Standing && GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Build)
                 {
                     if (Grounded) CurrentState = PlayerState.CrawlingIdle;
                 }
@@ -282,6 +320,26 @@ namespace StarterAssets
                     CurrentState = PlayerState.Standing;
                 }
                 UpdateState();
+            }
+        }
+        //四つん這い時の回転処理
+        private void PlayerRotate()
+        {
+            // 四つん這い（設置モード）中のみ回転を許可
+            if (CurrentState != PlayerState.CrawlingIdle) return;
+
+            float rotationSpeed = 50f; // 1秒間に回転する度数
+
+            if (_input.rotateR)
+            {
+                // 押されている間、右に回転
+                transform.Rotate(0f, rotationSpeed * Time.deltaTime, 0f);
+            }
+            
+            if (_input.rotateL)
+            {
+                // 押されている間、左に回転
+                transform.Rotate(0f, -rotationSpeed * Time.deltaTime, 0f);
             }
         }
 
@@ -348,17 +406,18 @@ namespace StarterAssets
 
         private void UpdateState()
         {
-            bool isAnyCrawl = (CurrentState != PlayerState.Standing);
-            
-            // カメラの切り替え
-            FPSCamera.Priority = isAnyCrawl ? 20 : 10;
-            TPSCamera.Priority = isAnyCrawl ? 10 : 20;
+            bool isAnyCrawl = CurrentState == PlayerState.CrawlingIdle || CurrentState == PlayerState.CrawlingMove;
 
-            // 設置モードの有効化（これはハイハイ時のみで良いはずです）
+            if (_controller != null)
+                {
+                    _controller.detectCollisions = true;
+                }
+
+            // 設置モードの有効化
             if (dominoPlacementManager != null) 
                 dominoPlacementManager.SetPlacementModeActive(isAnyCrawl);
 
-            // ★修正箇所：状態に関わらず常にトリガーを有効にする
+            //状態に関わらず常にトリガーを有効にする
             if (handFootTriggers != null)
             {
                 foreach (var trigger in handFootTriggers) 
@@ -366,6 +425,24 @@ namespace StarterAssets
                     trigger.IsActive = true; // 常時 true に設定
                 }
             }
+
+        }
+
+        //キックで連鎖開始
+        private void StartToChain()
+        {
+            Ready = (CurrentState == PlayerState.Standing) && (GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Ready);
+            if (_hasAnimator && _input.kick && Ready)
+            {
+                _animator.SetBool(_animIDReady, Ready); 
+            }
+
+            if (Ready && _input.kick)
+            {
+                _animator.SetTrigger(_animIDKick); 
+            }
+            _input.kick = false;
+
         }
 
         // Animator Events

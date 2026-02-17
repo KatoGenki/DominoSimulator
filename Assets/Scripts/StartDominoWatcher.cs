@@ -8,10 +8,16 @@ public class StartDominoWatcher : MonoBehaviour
 {
     private Quaternion _initialRotation;
     private bool _isTriggered = false;
+    CameraManager CameraManager;
     
     [Header("検知設定")]
     [SerializeField] private float _startAngleThreshold = 2.0f; // 2度傾いたら開始とみなす
 
+    void Awake()
+    {
+        // シーン内のCameraManagerを探して参照を取得
+        CameraManager = Object.FindFirstObjectByType<CameraManager>();
+    }
     void Start()
     {
         // アタッチされた瞬間の角度を記録
@@ -42,10 +48,11 @@ public class StartDominoWatcher : MonoBehaviour
             HUDManager.Instance.OnChainStartedUI();
         }
 
-        // 2. カメラの切り替え（GameManager側にカメラ優先度変更メソッドがある想定）
-        if (GameManager.Instance != null)
+        // 2. カメラの切り替え（CameraManager側にカメラ優先度変更メソッドがある想定）
+        if (CameraManager != null)
         {
-            GameManager.Instance.SwitchToResultCamera();
+            //Debug.Log("StartDominoWatcher: カメラを結果演出用に切り替えます。");
+            CameraManager.SwitchToResultCamera();
         }
     }
 }

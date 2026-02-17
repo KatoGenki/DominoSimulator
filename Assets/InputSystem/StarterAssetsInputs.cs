@@ -12,8 +12,11 @@ namespace StarterAssets
 		public Vector2 look;
 		public bool jump;
 		public bool sprint;
-		public bool buildMode;     // 視点・モード切り替え用 (Eキー)
+		public bool buildMode;     // 視点・モード切り替え用 (Tabキー)
         public bool place;         // ドミノのホールド/設置用 (マウス左クリック)
+		public bool rotateR = false;    // 右回転
+		public bool rotateL = false;	// 左回転
+		public bool kick = false;		// キックアクション
 
 		[Header("Movement Settings")]
 		public bool analogMovement;
@@ -54,6 +57,7 @@ namespace StarterAssets
 		{
 			PlaceInput(value.isPressed);
 		}
+
 #endif
 
 
@@ -100,12 +104,43 @@ namespace StarterAssets
 		public bool rotateMode; // 右クリックの状態
 
 		#if ENABLE_INPUT_SYSTEM
+		public void OnRotateR(InputValue value)
+		{
+			// Valueに設定されている場合、押した時(true)・離した時(false)の両方で呼ばれます
+			RotateRInput(value.isPressed);
+		}
+
+		public void OnRotateL(InputValue value)
+		{
+			RotateLInput(value.isPressed);
+		}
+		#endif
+
+		public void RotateRInput(bool newRotateState)
+		{
+			rotateR = newRotateState;
+		}
+
+		public void RotateLInput(bool newRotateState)
+		{
+			rotateL = newRotateState;
+		}
+
+		#if ENABLE_INPUT_SYSTEM
 		public void OnRotateMode(InputValue value)
 		{
 			rotateMode = value.isPressed;
 		}
 		#endif
-	}
+
+		public void OnKick(InputValue value)
+		{
+			KickInput(value.isPressed);
+		}
+		public void KickInput(bool newKickState)
+		{
+			kick = newKickState;
+		}
 	
-	
+	}	
 }
