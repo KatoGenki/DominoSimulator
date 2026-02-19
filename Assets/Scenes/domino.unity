@@ -263,7 +263,7 @@ GameObject:
   - component: {fileID: 81117175}
   - component: {fileID: 81117174}
   m_Layer: 5
-  m_Name: Text (TMP) (3)
+  m_Name: DominoCountTexts4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -522,7 +522,7 @@ GameObject:
   - component: {fileID: 94424491}
   - component: {fileID: 94424490}
   m_Layer: 5
-  m_Name: Text (TMP) (4)
+  m_Name: DominoCountTexts5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1330,7 +1330,7 @@ GameObject:
   - component: {fileID: 212456915}
   - component: {fileID: 212456914}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Multiplier
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1348,7 +1348,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 433474082}
+  m_Father: {fileID: 398695159}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1467,7 +1467,7 @@ GameObject:
   - component: {fileID: 242310930}
   - component: {fileID: 242310929}
   m_Layer: 5
-  m_Name: Text (TMP) (6)
+  m_Name: DominoMultiplierTexts7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2087,6 +2087,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 212456913}
   - {fileID: 1704126979}
   - {fileID: 1089474001}
   - {fileID: 706096355}
@@ -2339,7 +2340,6 @@ RectTransform:
   - {fileID: 895016827}
   - {fileID: 1044903535}
   - {fileID: 1282918169}
-  - {fileID: 212456913}
   m_Father: {fileID: 173274356}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -2526,6 +2526,7 @@ GameObject:
   - component: {fileID: 495798170}
   - component: {fileID: 495798169}
   - component: {fileID: 495798168}
+  - component: {fileID: 495798171}
   m_Layer: 5
   m_Name: ResultCanvas
   m_TagString: Untagged
@@ -2542,18 +2543,18 @@ RectTransform:
   m_GameObject: {fileID: 495798166}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 561983707}
   - {fileID: 173274356}
-  m_Father: {fileID: 709196504}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 0}
 --- !u!114 &495798168
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2617,6 +2618,47 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &495798171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 495798166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5edfd70fa8e9f7e49b784016e474a12f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResultUIManager
+  BackgroundImage: {fileID: 561983708}
+  ResultText: {fileID: 1753530446}
+  ChainText: {fileID: 1175753765}
+  EachDominoCountTexts:
+  - {fileID: 1863826476}
+  - {fileID: 1826218390}
+  - {fileID: 1996817181}
+  - {fileID: 81117174}
+  - {fileID: 94424490}
+  - {fileID: 1998429014}
+  - {fileID: 895016828}
+  - {fileID: 1044903536}
+  - {fileID: 1282918170}
+  TotalChainText: {fileID: 0}
+  MultiplierText: {fileID: 212456914}
+  EachDominoMultiplierTexts:
+  - {fileID: 1704126980}
+  - {fileID: 1089474002}
+  - {fileID: 706096356}
+  - {fileID: 781948699}
+  - {fileID: 553687286}
+  - {fileID: 1028323530}
+  - {fileID: 242310929}
+  - {fileID: 2070847300}
+  - {fileID: 1616875814}
+  TotalMultiplierText: {fileID: 0}
+  SymbolText1: {fileID: 2142864953}
+  SymbolText2: {fileID: 1703021831}
+  TotalScoreText: {fileID: 1529348167}
 --- !u!4 &518869298 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2749731984810275486, guid: 7b44632174d3f56459b71a128664c85a, type: 3}
@@ -2639,7 +2681,7 @@ GameObject:
   - component: {fileID: 553687287}
   - component: {fileID: 553687286}
   m_Layer: 5
-  m_Name: Text (TMP) (4)
+  m_Name: DominoMultiplierTexts5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2860,7 +2902,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 855.39, y: 368.7}
+  m_SizeDelta: {x: 910.02, y: 432.4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &561983708
 MonoBehaviour:
@@ -3762,7 +3804,7 @@ GameObject:
   - component: {fileID: 706096357}
   - component: {fileID: 706096356}
   m_Layer: 5
-  m_Name: Text (TMP) (2)
+  m_Name: DominoMultiplierTexts3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4070,7 +4112,7 @@ RectTransform:
   - {fileID: 1421986027}
   - {fileID: 1838917294}
   - {fileID: 1747753006}
-  - {fileID: 495798167}
+  - {fileID: 1733440844}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -4490,7 +4532,7 @@ GameObject:
   - component: {fileID: 781948700}
   - component: {fileID: 781948699}
   m_Layer: 5
-  m_Name: Text (TMP) (3)
+  m_Name: DominoMultiplierTexts4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5109,7 +5151,7 @@ GameObject:
   - component: {fileID: 895016829}
   - component: {fileID: 895016828}
   m_Layer: 5
-  m_Name: Text (TMP) (6)
+  m_Name: DominoCountTexts7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5973,7 +6015,7 @@ GameObject:
   - component: {fileID: 1028323531}
   - component: {fileID: 1028323530}
   m_Layer: 5
-  m_Name: Text (TMP) (5)
+  m_Name: DominoMultiplierTexts6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6171,7 +6213,7 @@ GameObject:
   - component: {fileID: 1044903537}
   - component: {fileID: 1044903536}
   m_Layer: 5
-  m_Name: Text (TMP) (7)
+  m_Name: DominoCountTexts8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6459,7 +6501,7 @@ GameObject:
   - component: {fileID: 1089474003}
   - component: {fileID: 1089474002}
   m_Layer: 5
-  m_Name: Text (TMP) (1)
+  m_Name: DominoMultiplierTexts2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7906,7 +7948,7 @@ GameObject:
   - component: {fileID: 1282918171}
   - component: {fileID: 1282918170}
   m_Layer: 5
-  m_Name: Text (TMP) (8)
+  m_Name: DominoCountTexts9
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9661,7 +9703,7 @@ GameObject:
   - component: {fileID: 1529348168}
   - component: {fileID: 1529348167}
   m_Layer: 5
-  m_Name: ResultScoreText
+  m_Name: TotalScoreText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10486,7 +10528,7 @@ GameObject:
   - component: {fileID: 1616875815}
   - component: {fileID: 1616875814}
   m_Layer: 5
-  m_Name: Text (TMP) (8)
+  m_Name: DominoMultiplierTexts9
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11400,7 +11442,7 @@ GameObject:
   - component: {fileID: 1704126981}
   - component: {fileID: 1704126980}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: DominoMultiplierTexts1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11851,6 +11893,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7b44632174d3f56459b71a128664c85a, type: 3}
+--- !u!4 &1733440844 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6611339375883146149, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
+  m_PrefabInstance: {fileID: 399638235055996242}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1747753005
 GameObject:
   m_ObjectHideFlags: 0
@@ -12416,7 +12463,7 @@ MonoBehaviour:
   _timerText: {fileID: 1421986025}
   _stateText: {fileID: 0}
   _resultPanel: {fileID: 0}
-  _buildTimeLimit: 50
+  _buildTimeLimit: 5
   _finishWaitTime: 2
   _targetGroup: {fileID: 1102682227}
   _resultCamera: {fileID: 1216405511}
@@ -12637,7 +12684,7 @@ GameObject:
   - component: {fileID: 1826218391}
   - component: {fileID: 1826218390}
   m_Layer: 5
-  m_Name: Text (TMP) (1)
+  m_Name: DominoCountTexts2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13048,7 +13095,7 @@ GameObject:
   - component: {fileID: 1863826477}
   - component: {fileID: 1863826476}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: DominoCountTexts1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13779,7 +13826,7 @@ GameObject:
   - component: {fileID: 1996817182}
   - component: {fileID: 1996817181}
   m_Layer: 5
-  m_Name: Text (TMP) (2)
+  m_Name: DominoCountTexts3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13916,7 +13963,7 @@ GameObject:
   - component: {fileID: 1998429015}
   - component: {fileID: 1998429014}
   m_Layer: 5
-  m_Name: Text (TMP) (5)
+  m_Name: DominoCountTexts6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14261,7 +14308,7 @@ GameObject:
   - component: {fileID: 2070847301}
   - component: {fileID: 2070847300}
   m_Layer: 5
-  m_Name: Text (TMP) (7)
+  m_Name: DominoMultiplierTexts8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14812,7 +14859,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 709196504}
     m_Modifications:
     - target: {fileID: 2107505845464390643, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
       propertyPath: m_Name
@@ -14823,16 +14870,28 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 104346087}
     - target: {fileID: 6611339375883146149, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.7027028
+      objectReference: {fileID: 0}
+    - target: {fileID: 6611339375883146149, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2.7027028
+      objectReference: {fileID: 0}
+    - target: {fileID: 6611339375883146149, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2.7027028
+      objectReference: {fileID: 0}
+    - target: {fileID: 6611339375883146149, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.00013238647
+      value: -400.00012
       objectReference: {fileID: 0}
     - target: {fileID: 6611339375883146149, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.9936967
+      value: -171.6273
       objectReference: {fileID: 0}
     - target: {fileID: 6611339375883146149, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -11.62515
+      value: -10.473108
       objectReference: {fileID: 0}
     - target: {fileID: 6611339375883146149, guid: 0223ddd05d51dcc47a82d96cec694ad0, type: 3}
       propertyPath: m_LocalRotation.w
@@ -14996,8 +15055,8 @@ SceneRoots:
   - {fileID: 1102695963}
   - {fileID: 1716634454}
   - {fileID: 1002508310}
-  - {fileID: 399638235055996242}
   - {fileID: 709196504}
+  - {fileID: 495798167}
   - {fileID: 733977427}
   - {fileID: 935026361}
   - {fileID: 1792859381}
