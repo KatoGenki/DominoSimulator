@@ -173,6 +173,8 @@ namespace StarterAssets
             if (ResultUIManager.Instance != null)
             {
                 Debug.Log("ふへへ、お兄ちゃん♡　スコアは" + ScoreManager.Instance.totalScore + "点だよ♡");
+                ResultUIManager.Instance.SetEachDominoCountTexts(); // ドミノの種類と個数をテキストにセット
+                ResultUIManager.Instance.ActiveResultUI();
                 ResultUIManager.Instance.ActivechainUI();
                 ResultUIManager.Instance.ActiveMultiplierUI();
                 ResultUIManager.Instance.ActiveTotalScoreUI();
