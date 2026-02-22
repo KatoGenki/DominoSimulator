@@ -75,6 +75,24 @@ public class ScoreManager : MonoBehaviour
             }
         }
 
+        // IDベースの集計
+        // 倒れたオブジェクトからDominoBaseを取得
+        DominoBase domino = fallenDominoTransform.GetComponent<DominoBase>();
+        if (domino != null)
+        {
+            int id = domino.DominoTypeID;
+            
+            // 個数をカウント
+            if (fallenDominoCounts.ContainsKey(id)) { fallenDominoCounts[id]++; }
+            else { fallenDominoCounts.Add(id, 1); }
+
+            // 表示用に名称も紐づけておく（初回のみ）
+            if (!dominoNames.ContainsKey(id))
+            {
+                // "(Clone)"を消して登録
+                dominoNames.Add(id, domino.name.Replace("(Clone)", "").Trim());
+            }
+        }
         // HUDの表示を更新
         if (HUDManager.Instance != null)
         {   // スコア表示更新メソッドを呼び出し

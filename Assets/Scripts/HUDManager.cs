@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using TMPro; // TextMeshProを使う場合はこれが必要
 using StarterAssets;
+using Unity.VisualScripting;
 
 [System.Serializable]
 public class DominoData

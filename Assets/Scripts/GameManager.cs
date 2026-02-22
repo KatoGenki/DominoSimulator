@@ -45,6 +45,7 @@ namespace StarterAssets
         [SerializeField] private GameObject _wipeUI;
         [SerializeField] private Camera _camera2; // 視界判定用
         CameraManager CameraManager;
+        ResultUIManager ResultUIManager;
 
         private void Awake()
         {
@@ -169,18 +170,16 @@ namespace StarterAssets
             currentState = GameState.Result;
             _finishTimer = 0f;
 
-<<<<<<< Updated upstream
-            if (_resultPanel != null) _resultPanel.SetActive(true);
-=======
             if (ResultUIManager.Instance != null)
             {
                 Debug.Log("ふへへ、お兄ちゃん♡　スコアは" + ScoreManager.Instance.totalScore + "点だよ♡");
-                ResultUIManager.Instance.ShowResultUI();
+                ResultUIManager.Instance.SetEachDominoCountTexts(); // ドミノの種類と個数をテキストにセット
+                ResultUIManager.Instance.ActiveResultUI();
+            if (_resultPanel != null) _resultPanel.SetActive(true);
                 ResultUIManager.Instance.ActivechainUI();
                 ResultUIManager.Instance.ActiveMultiplierUI();
                 ResultUIManager.Instance.ActiveTotalScoreUI();
             }
->>>>>>> Stashed changes
             Debug.Log("Chain Finished! Displaying Results.");
         }
 
