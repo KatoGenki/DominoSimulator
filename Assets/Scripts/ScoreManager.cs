@@ -56,6 +56,24 @@ public class ScoreManager : MonoBehaviour
         // 最終スコア加算
         int addValue = Mathf.RoundToInt(basePoint * finalMultiplier);
         totalScore += addValue;
+        //IDベースの集計
+        // 倒れたオブジェクトからDominoBaseを取得
+        DominoBase domino = fallenDominoTransform.GetComponent<DominoBase>();
+        if (domino != null)
+        {
+            int id = domino.DominoTypeID;
+            
+            // 個数をカウント
+            if (fallenDominoCounts.ContainsKey(id)) { fallenDominoCounts[id]++; }
+            else { fallenDominoCounts.Add(id, 1); }
+
+            // 表示用に名称も紐づけておく（初回のみ）
+            if (!dominoNames.ContainsKey(id))
+            {
+                // "(Clone)"を消して登録
+                dominoNames.Add(id, domino.name.Replace("(Clone)", "").Trim());
+            }
+        }
 
         // IDベースの集計
         // 倒れたオブジェクトからDominoBaseを取得

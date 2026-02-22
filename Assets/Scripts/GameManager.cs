@@ -175,6 +175,7 @@ namespace StarterAssets
                 Debug.Log("ふへへ、お兄ちゃん♡　スコアは" + ScoreManager.Instance.totalScore + "点だよ♡");
                 ResultUIManager.Instance.SetEachDominoCountTexts(); // ドミノの種類と個数をテキストにセット
                 ResultUIManager.Instance.ActiveResultUI();
+            if (_resultPanel != null) _resultPanel.SetActive(true);
                 ResultUIManager.Instance.ActivechainUI();
                 ResultUIManager.Instance.ActiveMultiplierUI();
                 ResultUIManager.Instance.ActiveTotalScoreUI();
