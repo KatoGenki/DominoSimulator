@@ -1,5 +1,6 @@
 using UnityEngine;
 using StarterAssets;
+using System.Collections.Generic;
 
 public class ScoreManager : MonoBehaviour
 {
@@ -16,6 +17,12 @@ public class ScoreManager : MonoBehaviour
     [Tooltip("1連鎖ごとに加算される倍率（例：0.01の場合、100連鎖で+1倍）")]
     public float chainBonusStep = 0.01f;
     CameraManager CameraManager;
+    // IDごとの倒れた個数を記録するDictionary
+    // Key: DominoTypeID, Value: 倒れた数
+    public Dictionary<int, int> fallenDominoCounts = new Dictionary<int, int>();
+
+    // IDに対応する名称を一時的に保持する辞書（表示用）
+    public Dictionary<int, string> dominoNames = new Dictionary<int, string>();
 
     //起動時に呼ばれる関数
     void Awake()
@@ -49,6 +56,24 @@ public class ScoreManager : MonoBehaviour
         // 最終スコア加算
         int addValue = Mathf.RoundToInt(basePoint * finalMultiplier);
         totalScore += addValue;
+        //IDベースの集計
+        // 倒れたオブジェクトからDominoBaseを取得
+        DominoBase domino = fallenDominoTransform.GetComponent<DominoBase>();
+        if (domino != null)
+        {
+            int id = domino.DominoTypeID;
+            
+            // 個数をカウント
+            if (fallenDominoCounts.ContainsKey(id)) { fallenDominoCounts[id]++; }
+            else { fallenDominoCounts.Add(id, 1); }
+
+            // 表示用に名称も紐づけておく（初回のみ）
+            if (!dominoNames.ContainsKey(id))
+            {
+                // "(Clone)"を消して登録
+                dominoNames.Add(id, domino.name.Replace("(Clone)", "").Trim());
+            }
+        }
 
         // HUDの表示を更新
         if (HUDManager.Instance != null)
