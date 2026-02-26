@@ -22,6 +22,7 @@ public class ResultUIManager : MonoBehaviour
     public TextMeshProUGUI SymbolText1;
     public TextMeshProUGUI SymbolText2;
     public TextMeshProUGUI TotalScoreText;
+    private readonly List<int> _dominoPieceTargetCounts = new List<int>();
 
     void Awake()
     {
@@ -36,63 +37,77 @@ public class ResultUIManager : MonoBehaviour
 
     public void ActiveResultUI()
     {
+        StopAllCoroutines();
         this.gameObject.SetActive(true);
+        ResetResultElementVisibility();
         // ResultTextを表示
         if (ResultText != null) 
         {
-            ShowUIWithDelay(0.5f, BackgroundImage.gameObject); // 0.5秒の遅延で表示
-            ShowUIWithDelay(0.5f, ResultText.gameObject); // 0.5秒の遅延で表示
+            // ① 背景 + RESULT
+            ShowUIWithDelay(0.0f, BackgroundImage.gameObject);
+            ShowUIWithDelay(0.0f, ResultText.gameObject); 
         }
     }
     public void ActivechainUI()
     {
         if (ChainText != null) 
         {
-            ShowUIWithDelay(0.5f, ChainText.gameObject); // 0.5秒の遅延で表示
+            // ② ChainText
+            ShowUIWithDelay(0.35f, ChainText.gameObject);
         }
         foreach (var text in DominoKindsTexts)
         {
-            ShowUIWithDelay(1.0f, text.gameObject); // 0.5秒の遅延で表示
+            // ③ DominoKindsTexts
+            ShowUIWithDelay(0.7f, text.gameObject); 
         }
-        foreach (var text in DominopiecesTexts)
+        for (int i = 0; i < DominopiecesTexts.Count; i++)
         {
-            ShowUIWithDelay(1.5f, text.gameObject); // 0.5秒の遅延で表示
+            // ④ DominopiecesTexts (1 から高速カウントアップ)
+            int target = i < _dominoPieceTargetCounts.Count ? _dominoPieceTargetCounts[i] : 0;
+            ShowDominoPieceWithCountUpDelay(1.05f, DominopiecesTexts[i], target);
         }
         if (TotalChainText != null) 
         {
-            ShowUIWithDelay(1.5f, TotalChainText.gameObject); // 0.5秒の遅延で表示
+            // ⑤ TotalChainText
+            ShowUIWithDelay(1.45f, TotalChainText.gameObject); 
         }
     }
 
     public void ActiveMultiplierUI()
     {
+        // ⑦ MultiplierText
         if (MultiplierText != null) 
         {
-            ShowUIWithDelay(0.5f, MultiplierText.gameObject); // 0.5秒の遅延で表示
+            ShowUIWithDelay(2.05f, MultiplierText.gameObject);
         }
+        // ⑧ EachDominoMultiplierTexts
         foreach (var text in EachDominoMultiplierTexts)
         {
-            ShowUIWithDelay(1.0f, text.gameObject); // 0.5秒の遅延で表示
+            ShowUIWithDelay(2.35f, text.gameObject); 
         }
+        // ⑨ TotalMultiplierText
         if (TotalMultiplierText != null) 
         {
-            ShowUIWithDelay(1.5f, TotalMultiplierText.gameObject); // 0.5秒の遅延で表示
+            ShowUIWithDelay(2.75f, TotalMultiplierText.gameObject); 
         }
     }
 
     public void ActiveTotalScoreUI()
     {
+        // ⑥ SymbolText1
         if (SymbolText1 != null) 
         {
-            ShowUIWithDelay(0.5f, SymbolText1.gameObject); // 0.5秒の遅延で表示
+            ShowUIWithDelay(1.75f, SymbolText1.gameObject);
         }
+        // ⑩ SymbolText2
         if (SymbolText2 != null) 
         {
-            ShowUIWithDelay(1.0f, SymbolText2.gameObject); // 0.5秒の遅延で表示
+            ShowUIWithDelay(3.05f, SymbolText2.gameObject);
         }
+        // ⑪ TotalScoreText
         if (TotalScoreText != null) 
         {
-            ShowUIWithDelay(1.5f, TotalScoreText.gameObject); // 0.5秒の遅延で表示
+            ShowUIWithDelay(3.35f, TotalScoreText.gameObject);
         }
     }
 
@@ -117,11 +132,16 @@ public class ResultUIManager : MonoBehaviour
             text.text = "";
             text.gameObject.SetActive(false);
         }
+        _dominoPieceTargetCounts.Clear();
+        for (int i = 0; i < DominopiecesTexts.Count; i++)
+        {
+            _dominoPieceTargetCounts.Add(0);
+        }
 
         // 3. UIに流し込む
         for (int i = 0; i < sortedData.Count; i++)
         {
-            if (i < DominoKindsTexts.Count)
+            if (i < DominoKindsTexts.Count && i < DominopiecesTexts.Count)
             {
                 int id = sortedData[i].Key;
                 int count = sortedData[i].Value;
@@ -131,7 +151,8 @@ public class ResultUIManager : MonoBehaviour
                 // 表示例: "100: NormalDomino x 15" 
                 // IDを表示したくない場合は {dName} x {count} だけにする
                 DominoKindsTexts[i].text = $"{dName}";
-                DominopiecesTexts[i].text = $"x {count}";
+                DominopiecesTexts[i].text = "x 0";
+                _dominoPieceTargetCounts[i] = count;
             }
         }
     }
@@ -147,5 +168,65 @@ public class ResultUIManager : MonoBehaviour
         yield return new WaitForSeconds(delay);
         // ここでUIを表示する処理
         if (uiObject != null) uiObject.SetActive(true);
+    }
+
+    void ShowDominoPieceWithCountUpDelay(float delay, TextMeshProUGUI targetText, int targetCount)
+    {
+        StartCoroutine(ShowDominoPieceCountUpAfterDelay(delay, targetText, targetCount));
+    }
+
+    System.Collections.IEnumerator ShowDominoPieceCountUpAfterDelay(float delay, TextMeshProUGUI targetText, int targetCount)
+    {
+        yield return new WaitForSeconds(delay);
+        if (targetText == null) yield break;
+
+        targetText.gameObject.SetActive(true);
+        if (targetCount <= 0)
+        {
+            targetText.text = "x 0";
+            yield break;
+        }
+
+        const float countUpDuration = 0.45f;
+        int startValue = 1;
+        float elapsed = 0f;
+        targetText.text = $"x {startValue}";
+
+        while (elapsed < countUpDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / countUpDuration);
+            int value = Mathf.Clamp(Mathf.RoundToInt(Mathf.Lerp(startValue, targetCount, t)), startValue, targetCount);
+            targetText.text = $"x {value}";
+            yield return null;
+        }
+
+        targetText.text = $"x {targetCount}";
+    }
+
+    private void ResetResultElementVisibility()
+    {
+        if (BackgroundImage != null) BackgroundImage.gameObject.SetActive(false);
+        if (ResultText != null) ResultText.gameObject.SetActive(false);
+        if (ChainText != null) ChainText.gameObject.SetActive(false);
+        if (TotalChainText != null) TotalChainText.gameObject.SetActive(false);
+        if (MultiplierText != null) MultiplierText.gameObject.SetActive(false);
+        if (TotalMultiplierText != null) TotalMultiplierText.gameObject.SetActive(false);
+        if (SymbolText1 != null) SymbolText1.gameObject.SetActive(false);
+        if (SymbolText2 != null) SymbolText2.gameObject.SetActive(false);
+        if (TotalScoreText != null) TotalScoreText.gameObject.SetActive(false);
+
+        foreach (var text in DominoKindsTexts)
+        {
+            if (text != null) text.gameObject.SetActive(false);
+        }
+        foreach (var text in DominopiecesTexts)
+        {
+            if (text != null) text.gameObject.SetActive(false);
+        }
+        foreach (var text in EachDominoMultiplierTexts)
+        {
+            if (text != null) text.gameObject.SetActive(false);
+        }
     }
 }

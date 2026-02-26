@@ -8831,7 +8831,6 @@ MonoBehaviour:
   _targetGroup: {fileID: 1102682227}
   _resultCamera: {fileID: 1216405511}
   _wipeUI: {fileID: 0}
-  _camera2: {fileID: 1102695962}
 --- !u!4 &1387812895
 Transform:
   m_ObjectHideFlags: 0
@@ -12596,12 +12595,9 @@ MonoBehaviour:
   _timerText: {fileID: 373345690}
   _stateText: {fileID: 0}
   _resultPanel: {fileID: 0}
-  _buildTimeLimit: 60
+  _buildTimeLimit: 30
   _finishWaitTime: 2
-  _targetGroup: {fileID: 1102682227}
-  _resultCamera: {fileID: 1216405511}
   _wipeUI: {fileID: 0}
-  _camera2: {fileID: 1102695962}
 --- !u!4 &1792859381
 Transform:
   m_ObjectHideFlags: 0

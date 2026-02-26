@@ -19,8 +19,21 @@ public abstract class DominoBase : MonoBehaviour
     protected Rigidbody _rb;
     //設置時の角度を記録するための変数
     private Quaternion _initialRotation;
+    private const float LinearMovingThresholdSqr = 0.25f;   // 0.05^2
+    private const float AngularMovingThresholdSqr = 0.1f;
+
     // 物理的に動いているかの判定
-    public bool IsMoving => _rb != null && _rb.linearVelocity.magnitude > 0.05f;
+    public bool IsMoving
+    {
+        get
+        {
+            if (_rb == null) return false;
+            if (_rb.IsSleeping()) return false;
+
+            return _rb.linearVelocity.sqrMagnitude > LinearMovingThresholdSqr
+                || _rb.angularVelocity.sqrMagnitude > AngularMovingThresholdSqr;
+        }
+    }
 
     protected virtual void Awake()
     {

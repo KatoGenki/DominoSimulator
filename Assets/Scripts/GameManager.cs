@@ -115,6 +115,7 @@ namespace StarterAssets
                 }
             }
 
+
             // 動いているドミノがない場合、終了タイマーを進める
             // ※スコアが0（一度も倒れていない）場合は開始待ちなので除外
             if (!anyMoving && scoreManager != null && scoreManager.totalScore > 0)
@@ -122,11 +123,14 @@ namespace StarterAssets
                 _finishTimer += Time.deltaTime;
                 if (_finishTimer >= _finishWaitTime)
                 {
+                    Debug.Log("連鎖終了！");
                     OnChainFinished();
                 }
             }
             else
             {
+                Debug.Log("anyMoving: " + anyMoving);
+                Debug.Log("scoreManager.totalScore: " + scoreManager.totalScore);
                 _finishTimer = 0f;
             }
         }
