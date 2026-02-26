@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
-using StarterAssets;
 using System.Linq;
 
 public class ResultUIManager : MonoBehaviour
@@ -33,15 +32,6 @@ public class ResultUIManager : MonoBehaviour
     {
         // 初期状態では非表示にする
         gameObject.SetActive(false);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (GameManager.Instance.currentState == GameManager.GameState.Result)
-        {
-        
-        }
     }
 
     public void ActiveResultUI()
@@ -108,10 +98,11 @@ public class ResultUIManager : MonoBehaviour
 
     public void SetEachDominoCountTexts()
     {
-        if (ScoreManager.Instance == null) return;
+        var scoreManager = ScoreManager.Instance;
+        if (scoreManager == null) return;
 
         // 1. IDの昇順でデータを抽出
-        var sortedData = ScoreManager.Instance.fallenDominoCounts
+        var sortedData = scoreManager.fallenDominoCounts
             .OrderBy(x => x.Key) // ここで_dominoTypeID順になる
             .ToList();
 
@@ -134,8 +125,8 @@ public class ResultUIManager : MonoBehaviour
             {
                 int id = sortedData[i].Key;
                 int count = sortedData[i].Value;
-                string dName = ScoreManager.Instance.dominoNames.ContainsKey(id) 
-                               ? ScoreManager.Instance.dominoNames[id] : "Unknown";
+                string dName = scoreManager.dominoNames.ContainsKey(id) 
+                               ? scoreManager.dominoNames[id] : "Unknown";
 
                 // 表示例: "100: NormalDomino x 15" 
                 // IDを表示したくない場合は {dName} x {count} だけにする

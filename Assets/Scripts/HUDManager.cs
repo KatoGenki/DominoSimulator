@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using TMPro; // TextMeshProを使う場合はこれが必要
 using StarterAssets;
-using Unity.VisualScripting;
 
 [System.Serializable]
 public class DominoData
@@ -51,7 +50,10 @@ public class HUDManager : MonoBehaviour
         
         // 起動時にHUDの表示を最新にする
         RefreshAllSlots();
-        SetTargetScoreUI(GameManager.Instance.targetScore);
+        if (GameManager.Instance != null)
+        {
+            SetTargetScoreUI(GameManager.Instance.targetScore);
+        }
     }
 
     void Update()

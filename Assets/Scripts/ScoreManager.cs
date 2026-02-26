@@ -1,6 +1,6 @@
 using UnityEngine;
-using StarterAssets;
 using System.Collections.Generic;
+using StarterAssets;
 
 public class ScoreManager : MonoBehaviour
 {
@@ -39,6 +39,7 @@ public class ScoreManager : MonoBehaviour
     /// <param name="height">倒れた瞬間の高さ</param>
     public void AddScore(int basePoint, float height, Transform fallenDominoTransform)
     {
+        _ = height;
         //Debug.Log("AddScore呼ばれた！");
         // GameManagerが見つからない、もしくは制限時間内の場合はスコア加算を行わない
         if (GameManager.Instance == null || GameManager.Instance.currentState == GameManager.GameState.Build)
@@ -64,8 +65,14 @@ public class ScoreManager : MonoBehaviour
             int id = domino.DominoTypeID;
             
             // 個数をカウント
-            if (fallenDominoCounts.ContainsKey(id)) { fallenDominoCounts[id]++; }
-            else { fallenDominoCounts.Add(id, 1); }
+            if (fallenDominoCounts.TryGetValue(id, out int currentCount))
+            {
+                fallenDominoCounts[id] = currentCount + 1;
+            }
+            else
+            {
+                fallenDominoCounts.Add(id, 1);
+            }
 
             // 表示用に名称も紐づけておく（初回のみ）
             if (!dominoNames.ContainsKey(id))

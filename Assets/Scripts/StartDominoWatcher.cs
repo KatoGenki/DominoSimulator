@@ -1,5 +1,4 @@
 using UnityEngine;
-using StarterAssets;
 
 /// <summary>
 /// プレイヤーが最初に触れたドミノに動的に追加され、連鎖の開始（動き出し）を検知する

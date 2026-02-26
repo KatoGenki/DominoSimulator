@@ -1,6 +1,5 @@
 using UnityEngine;
 using StarterAssets;
-using UnityEngine.InputSystem;
 
 public class DominoTrigger : MonoBehaviour
 {
@@ -10,6 +9,8 @@ public class DominoTrigger : MonoBehaviour
     public LayerMask DominoLayer;
 
     private Collider _myCollider; //自身のコライダー参照用
+    private bool IsInDominoLayer(int layer) => ((1 << layer) & DominoLayer) != 0;
+
 
     private void Start()
     {
@@ -39,7 +40,7 @@ public class DominoTrigger : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Ready)
         {
             // 触れたのがドミノレイヤーであり、まだWatcherが付いていない場合
-            if (((1 << other.gameObject.layer) & DominoLayer) != 0)
+            if (IsInDominoLayer(other.gameObject.layer))
             {
                 if (other.GetComponent<StartDominoWatcher>() == null)
                 {
@@ -50,7 +51,7 @@ public class DominoTrigger : MonoBehaviour
         }
         
         // レイヤーチェック
-        if (((1 << other.gameObject.layer) & DominoLayer) == 0) return;
+        if (!IsInDominoLayer(other.gameObject.layer)) return;
 
         Rigidbody rb = other.attachedRigidbody;
         if (rb == null || rb.isKinematic) return;

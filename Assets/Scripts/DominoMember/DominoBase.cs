@@ -17,7 +17,6 @@ public abstract class DominoBase : MonoBehaviour
     
     protected bool _isToppled = false;
     protected Rigidbody _rb;
-    CameraManager CameraManager;
     //設置時の角度を記録するための変数
     private Quaternion _initialRotation;
     // 物理的に動いているかの判定

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using Cinemachine;
 
 namespace StarterAssets
 {
@@ -40,12 +39,7 @@ namespace StarterAssets
         private float _finishTimer = 0f;
 
         [Header("Camera & Visuals")]
-        [SerializeField] private CinemachineTargetGroup _targetGroup;
-        [SerializeField] private CinemachineVirtualCamera _resultCamera;
         [SerializeField] private GameObject _wipeUI;
-        [SerializeField] private Camera _camera2; // 視界判定用
-        CameraManager CameraManager;
-        ResultUIManager ResultUIManager;
 
         private void Awake()
         {
@@ -108,6 +102,7 @@ namespace StarterAssets
         private void CheckChainStatus()
         {
             bool anyMoving = false;
+            var scoreManager = ScoreManager.Instance;
 
             // 全てのドミノをループして動きをチェック
             foreach (var domino in _dominoRegistry.Values)
@@ -122,7 +117,7 @@ namespace StarterAssets
 
             // 動いているドミノがない場合、終了タイマーを進める
             // ※スコアが0（一度も倒れていない）場合は開始待ちなので除外
-            if (!anyMoving && ScoreManager.Instance != null && ScoreManager.Instance.totalScore > 0)
+            if (!anyMoving && scoreManager != null && scoreManager.totalScore > 0)
             {
                 _finishTimer += Time.deltaTime;
                 if (_finishTimer >= _finishWaitTime)
@@ -169,16 +164,18 @@ namespace StarterAssets
 
             currentState = GameState.Result;
             _finishTimer = 0f;
+            var scoreManager = ScoreManager.Instance;
+            var resultUIManager = ResultUIManager.Instance;
 
-            if (ResultUIManager.Instance != null)
+            if (resultUIManager != null && scoreManager != null)
             {
-                Debug.Log("ふへへ、お兄ちゃん♡　スコアは" + ScoreManager.Instance.totalScore + "点だよ♡");
-                ResultUIManager.Instance.SetEachDominoCountTexts(); // ドミノの種類と個数をテキストにセット
-                ResultUIManager.Instance.ActiveResultUI();
-            if (_resultPanel != null) _resultPanel.SetActive(true);
-                ResultUIManager.Instance.ActivechainUI();
-                ResultUIManager.Instance.ActiveMultiplierUI();
-                ResultUIManager.Instance.ActiveTotalScoreUI();
+                Debug.Log("ふへへ、お兄ちゃん♡　スコアは" + scoreManager.totalScore + "点だよ♡");
+                resultUIManager.SetEachDominoCountTexts(); // ドミノの種類と個数をテキストにセット
+                resultUIManager.ActiveResultUI();
+                if (_resultPanel != null) _resultPanel.SetActive(true);
+                resultUIManager.ActivechainUI();
+                resultUIManager.ActiveMultiplierUI();
+                resultUIManager.ActiveTotalScoreUI();
             }
             Debug.Log("Chain Finished! Displaying Results.");
         }

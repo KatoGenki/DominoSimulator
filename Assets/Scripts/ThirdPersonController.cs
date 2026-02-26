@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cinemachine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
@@ -64,7 +64,6 @@ namespace StarterAssets
 
         // 内部変数
         private bool _placeDomino = false; 
-        private Vector2 _mouseDelta = Vector2.zero;
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
 
@@ -97,7 +96,6 @@ namespace StarterAssets
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
         private DominoPlacement _dominoPlacement;
-        private GameManager _gameManager;
 
         private const float _threshold = 0.01f;
         private bool _hasAnimator;
@@ -130,7 +128,6 @@ namespace StarterAssets
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
             _dominoPlacement = GetComponent<DominoPlacement>();
-            _gameManager = GetComponent<GameManager>();
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
 #endif
@@ -152,7 +149,10 @@ namespace StarterAssets
             GroundedCheck();
             Move();
             PlayerRotate();
-            _dominoPlacement.UpdateIKWeight();
+            if (_dominoPlacement != null)
+            {
+                _dominoPlacement.UpdateIKWeight();
+            }
 
             // 1. 状態判定（isAnyCrawlなどは既存のロジックを使用）
             bool isAnyCrawl = CurrentState == PlayerState.CrawlingIdle || CurrentState == PlayerState.CrawlingMove;
