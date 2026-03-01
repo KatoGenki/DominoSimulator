@@ -19,8 +19,9 @@ public abstract class DominoBase : MonoBehaviour
     protected Rigidbody _rb;
     //設置時の角度を記録するための変数
     private Quaternion _initialRotation;
-    private const float LinearMovingThresholdSqr = 0.25f;   // 0.05^2
-    private const float AngularMovingThresholdSqr = 0.1f;
+    // わずかな物理の揺れを「静止」とみなすためのしきい値（値を大きくすると緩くなる）
+    private const float LinearMovingThresholdSqr = 0.5f;    // 線速度 > 約0.7 m/s で「動いている」
+    private const float AngularMovingThresholdSqr = 0.25f; // 角速度 > 約0.5 rad/s で「動いている」
 
     // 物理的に動いているかの判定
     public bool IsMoving

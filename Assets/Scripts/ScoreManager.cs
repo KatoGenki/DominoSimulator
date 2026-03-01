@@ -2,6 +2,13 @@ using UnityEngine;
 using System.Collections.Generic;
 using StarterAssets;
 
+/// <summary> 倍率の種類と値を保持（リザルト表示用） </summary>
+public struct MultiplierInfo
+{
+    public string displayName;
+    public float value;
+}
+
 public class ScoreManager : MonoBehaviour
 {
     // シングルトンインスタンス
@@ -23,6 +30,9 @@ public class ScoreManager : MonoBehaviour
 
     // IDに対応する名称を一時的に保持する辞書（表示用）
     public Dictionary<int, string> dominoNames = new Dictionary<int, string>();
+
+    // IDごとの基礎ポイント（初回登録時に保存）
+    private Dictionary<int, int> _dominoBasePoints = new Dictionary<int, int>();
 
     //起動時に呼ばれる関数
     void Awake()
@@ -77,8 +87,12 @@ public class ScoreManager : MonoBehaviour
             // 表示用に名称も紐づけておく（初回のみ）
             if (!dominoNames.ContainsKey(id))
             {
-                // "(Clone)"を消して登録
                 dominoNames.Add(id, domino.name.Replace("(Clone)", "").Trim());
+            }
+            // 基礎ポイントを紐づけておく（初回のみ）
+            if (!_dominoBasePoints.ContainsKey(id))
+            {
+                _dominoBasePoints.Add(id, basePoint);
             }
         }
         // HUDの表示を更新
@@ -95,6 +109,48 @@ public class ScoreManager : MonoBehaviour
         }
 
     }
+    /// <summary>
+    /// リザルト表示用に、現在有効な倍率の一覧を取得する。
+    /// 新しいボーナス種類を追加する場合は、このメソッドにエントリを追加する。
+    /// </summary>
+    public List<MultiplierInfo> GetActiveMultipliersForDisplay()
+    {
+        var list = new List<MultiplierInfo>();
+
+        // ChainBonus: 連鎖数に応じた倍率
+        float chainBonus = chainCount * chainBonusStep;
+        float chainMultiplier = 1.0f + chainBonus;
+        list.Add(new MultiplierInfo { displayName = "ChainBonus", value = chainMultiplier });
+
+        // 将来的なボーナス追加例:
+        // list.Add(new MultiplierInfo { displayName = "HeightBonus", value = heightMultiplier });
+
+        return list;
+    }
+
+    /// <summary> ドミノの基礎ポイントの合計（種類×個数の合計） </summary>
+    public int GetTotalBasePoints()
+    {
+        int total = 0;
+        foreach (var kv in fallenDominoCounts)
+        {
+            if (_dominoBasePoints.TryGetValue(kv.Key, out int basePoint))
+                total += basePoint * kv.Value;
+        }
+        return total;
+    }
+
+    /// <summary> 全倍率を掛け合わせた合計倍率（スコア計算に使用） </summary>
+    public float GetTotalMultiplier()
+    {
+        float total = 1.0f;
+        foreach (var m in GetActiveMultipliersForDisplay())
+        {
+            total *= m.value;
+        }
+        return total;
+    }
+
     //GameManagerから呼ばれて現在のスコアを伝えるメソッド
     public int GetCurrentScore()
     {

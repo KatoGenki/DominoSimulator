@@ -23,6 +23,8 @@ public class ResultUIManager : MonoBehaviour
     public TextMeshProUGUI SymbolText2;
     public TextMeshProUGUI TotalScoreText;
     private readonly List<int> _dominoPieceTargetCounts = new List<int>();
+    private int _fallenDominoTypeCount = 0; // 倒れたドミノの種類数
+    private int _activeMultiplierCount = 0; // 表示する倍率の種類数
 
     void Awake()
     {
@@ -53,23 +55,23 @@ public class ResultUIManager : MonoBehaviour
         if (ChainText != null) 
         {
             // ② ChainText
-            ShowUIWithDelay(0.35f, ChainText.gameObject);
+            ShowUIWithDelay(0.5f, ChainText.gameObject);
         }
-        foreach (var text in DominoKindsTexts)
+        for (int i = 0; i < _fallenDominoTypeCount && i < DominoKindsTexts.Count; i++)
         {
-            // ③ DominoKindsTexts
-            ShowUIWithDelay(0.7f, text.gameObject); 
+            // ③ DominoKindsTexts（倒れた種類分のみ）
+            ShowUIWithDelay(1.0f, DominoKindsTexts[i].gameObject); 
         }
-        for (int i = 0; i < DominopiecesTexts.Count; i++)
+        for (int i = 0; i < _fallenDominoTypeCount && i < DominopiecesTexts.Count; i++)
         {
-            // ④ DominopiecesTexts (1 から高速カウントアップ)
+            // ④ DominopiecesTexts（倒れた種類分のみ、1からカウントアップ）
             int target = i < _dominoPieceTargetCounts.Count ? _dominoPieceTargetCounts[i] : 0;
-            ShowDominoPieceWithCountUpDelay(1.05f, DominopiecesTexts[i], target);
+            ShowDominoPieceWithCountUpDelay(1.5f, DominopiecesTexts[i], target);
         }
         if (TotalChainText != null) 
         {
             // ⑤ TotalChainText
-            ShowUIWithDelay(1.45f, TotalChainText.gameObject); 
+            ShowUIWithDelay(2.0f, TotalChainText.gameObject); 
         }
     }
 
@@ -78,17 +80,18 @@ public class ResultUIManager : MonoBehaviour
         // ⑦ MultiplierText
         if (MultiplierText != null) 
         {
-            ShowUIWithDelay(2.05f, MultiplierText.gameObject);
+            ShowUIWithDelay(3.0f, MultiplierText.gameObject);
         }
-        // ⑧ EachDominoMultiplierTexts
-        foreach (var text in EachDominoMultiplierTexts)
+        // ⑧ EachDominoMultiplierTexts（倍率種類分を表示）
+        for (int i = 0; i < _activeMultiplierCount && i < EachDominoMultiplierTexts.Count; i++)
         {
-            ShowUIWithDelay(2.35f, text.gameObject); 
+            if (EachDominoMultiplierTexts[i] != null)
+                ShowUIWithDelay(3.4f, EachDominoMultiplierTexts[i].gameObject); 
         }
         // ⑨ TotalMultiplierText
         if (TotalMultiplierText != null) 
         {
-            ShowUIWithDelay(2.75f, TotalMultiplierText.gameObject); 
+            ShowUIWithDelay(3.9f, TotalMultiplierText.gameObject); 
         }
     }
 
@@ -97,17 +100,17 @@ public class ResultUIManager : MonoBehaviour
         // ⑥ SymbolText1
         if (SymbolText1 != null) 
         {
-            ShowUIWithDelay(1.75f, SymbolText1.gameObject);
+            ShowUIWithDelay(2.5f, SymbolText1.gameObject);
         }
         // ⑩ SymbolText2
         if (SymbolText2 != null) 
         {
-            ShowUIWithDelay(3.05f, SymbolText2.gameObject);
+            ShowUIWithDelay(4.4f, SymbolText2.gameObject);
         }
         // ⑪ TotalScoreText
         if (TotalScoreText != null) 
         {
-            ShowUIWithDelay(3.35f, TotalScoreText.gameObject);
+            ShowUIWithDelay(4.8f, TotalScoreText.gameObject);
         }
     }
 
@@ -121,24 +124,25 @@ public class ResultUIManager : MonoBehaviour
             .OrderBy(x => x.Key) // ここで_dominoTypeID順になる
             .ToList();
 
-        // 2. テキストの初期化
+        _fallenDominoTypeCount = sortedData.Count;
+
+        // 2. テキストの初期化（全要素を非表示に）
         foreach (var text in DominoKindsTexts)
         {
-            text.text = "";
-            text.gameObject.SetActive(false);
+            if (text != null) { text.text = ""; text.gameObject.SetActive(false); }
         }
         foreach (var text in DominopiecesTexts)
         {
-            text.text = "";
-            text.gameObject.SetActive(false);
+            if (text != null) { text.text = ""; text.gameObject.SetActive(false); }
         }
-        _dominoPieceTargetCounts.Clear();
-        for (int i = 0; i < DominopiecesTexts.Count; i++)
+        foreach (var text in EachDominoMultiplierTexts)
         {
-            _dominoPieceTargetCounts.Add(0);
+            if (text != null) text.gameObject.SetActive(false);
         }
 
-        // 3. UIに流し込む
+        _dominoPieceTargetCounts.Clear();
+
+        // 3. 倒れた種類分だけUIに流し込む
         for (int i = 0; i < sortedData.Count; i++)
         {
             if (i < DominoKindsTexts.Count && i < DominopiecesTexts.Count)
@@ -148,12 +152,35 @@ public class ResultUIManager : MonoBehaviour
                 string dName = scoreManager.dominoNames.ContainsKey(id) 
                                ? scoreManager.dominoNames[id] : "Unknown";
 
-                // 表示例: "100: NormalDomino x 15" 
-                // IDを表示したくない場合は {dName} x {count} だけにする
                 DominoKindsTexts[i].text = $"{dName}";
                 DominopiecesTexts[i].text = "x 0";
-                _dominoPieceTargetCounts[i] = count;
+                _dominoPieceTargetCounts.Add(count);
             }
+        }
+
+        // EachDominoMultiplierTexts: 倍率管理から取得し "ChainBonus ×1.15" 形式で表示
+        var multipliers = scoreManager.GetActiveMultipliersForDisplay();
+        _activeMultiplierCount = multipliers.Count;
+        for (int i = 0; i < multipliers.Count && i < EachDominoMultiplierTexts.Count; i++)
+        {
+            var text = EachDominoMultiplierTexts[i];
+            if (text != null)
+                text.text = $"{multipliers[i].displayName} ×{multipliers[i].value:F2}";
+        }
+
+        // TotalChainText: ドミノの基礎ポイントの合計
+        if (TotalChainText != null)
+            TotalChainText.text = scoreManager.GetTotalBasePoints().ToString();
+
+        // TotalMultiplierText: 倍率の合計
+        if (TotalMultiplierText != null)
+            TotalMultiplierText.text = $"×{scoreManager.GetTotalMultiplier():F2}";
+
+        // TotalScoreText: 基礎ポイント × 倍率 = スコア
+        if (TotalScoreText != null)
+        {
+            int score = Mathf.RoundToInt(scoreManager.GetTotalBasePoints() * scoreManager.GetTotalMultiplier());
+            TotalScoreText.text = score.ToString();
         }
     }
     //表示するUIを時間差で出すためのコルーチン
@@ -187,7 +214,7 @@ public class ResultUIManager : MonoBehaviour
             yield break;
         }
 
-        const float countUpDuration = 0.45f;
+        const float countUpDuration = 0.7f;
         int startValue = 1;
         float elapsed = 0f;
         targetText.text = $"x {startValue}";

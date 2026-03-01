@@ -36,7 +36,9 @@ namespace StarterAssets
 
         [Header("Finish Detection")]
         [SerializeField] private float _finishWaitTime = 2.0f;
+        [SerializeField] private float _maxChainWaitTime = 60f; // フォールバック: この秒数経過で強制Resultへ
         private float _finishTimer = 0f;
+        private float _readyStateTimer = 0f;
 
         [Header("Camera & Visuals")]
         [SerializeField] private GameObject _wipeUI;
@@ -104,7 +106,6 @@ namespace StarterAssets
             bool anyMoving = false;
             var scoreManager = ScoreManager.Instance;
 
-            // 全てのドミノをループして動きをチェック
             foreach (var domino in _dominoRegistry.Values)
             {
                 if (domino == null) continue;
@@ -115,9 +116,8 @@ namespace StarterAssets
                 }
             }
 
+            _readyStateTimer += Time.deltaTime;
 
-            // 動いているドミノがない場合、終了タイマーを進める
-            // ※スコアが0（一度も倒れていない）場合は開始待ちなので除外
             if (!anyMoving && scoreManager != null && scoreManager.totalScore > 0)
             {
                 _finishTimer += Time.deltaTime;
@@ -129,9 +129,13 @@ namespace StarterAssets
             }
             else
             {
-                Debug.Log("anyMoving: " + anyMoving);
-                Debug.Log("scoreManager.totalScore: " + scoreManager.totalScore);
                 _finishTimer = 0f;
+            }
+
+            if (scoreManager != null && scoreManager.totalScore > 0 && _readyStateTimer >= _maxChainWaitTime)
+            {
+                Debug.Log("連鎖終了（最大待機時間）");
+                OnChainFinished();
             }
         }
 
@@ -153,6 +157,7 @@ namespace StarterAssets
             _remainingTime = 0;
             _isTimerStopped = true;
             currentState = GameState.Ready;
+            _readyStateTimer = 0f;
 
             var player = Object.FindFirstObjectByType<ThirdPersonController>();
             if (player != null)

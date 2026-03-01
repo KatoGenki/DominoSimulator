@@ -1,4 +1,5 @@
 using UnityEngine;
+using StarterAssets;
 
 public class ExplosiveDomino : DominoBase
 {
@@ -11,13 +12,31 @@ public class ExplosiveDomino : DominoBase
     [Header("Visual Effects")]
     [SerializeField] private GameObject _explosionEffectPrefab; // 爆発エフェクト（任意）
 
+    private int _dominoContactCount = 0;  // DominoLayerに触れた回数
+    private bool _hasExploded = false;    // 爆発済みフラグ
+
+    private bool IsInDominoLayer(int layer) => _affectedLayers != 0 && ((1 << layer) & _affectedLayers) != 0;
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (_hasExploded) return;
+        if (GameManager.Instance == null || GameManager.Instance.currentState != GameManager.GameState.Ready) return;
+
+        if (!IsInDominoLayer(collision.gameObject.layer)) return;
+        if (collision.gameObject == gameObject) return;
+
+        _dominoContactCount++;
+        if (_dominoContactCount >= 2)
+        {
+            _hasExploded = true;
+            ExecuteExplosion();
+        }
+    }
+
     protected override void OnToppled()
     {
-        // 親クラスのスコア加算やカメラターゲット更新処理を先に実行
         base.OnToppled();
-
-        // 爆発処理を実行
-        ExecuteExplosion();
+        // 爆発は「2個目のDominoLayerに触れた瞬間」で発生するため、ここでは実行しない
     }
 
     private void ExecuteExplosion()
