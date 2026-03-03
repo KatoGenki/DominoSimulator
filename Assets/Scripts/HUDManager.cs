@@ -58,9 +58,25 @@ public class HUDManager : MonoBehaviour
 
     void Update()
     {
-        // マウスホイールによる選択切り替え
-        if (Mouse.current != null)
-        {   //スクロールの位置を取得
+        bool shouldHandleScroll = true;
+
+        // Ready かつ ドミノが倒れている（スコアが加算されている）場合は
+        // FreeLookZoomController にスクロールを優先させるため、HUD側ではスクロール入力を無視する
+        var gameManager = GameManager.Instance;
+        var scoreManager = ScoreManager.Instance;
+        if (gameManager != null && scoreManager != null)
+        {
+            if (gameManager.currentState == GameManager.GameState.Ready &&
+                scoreManager.totalScore > 0)
+            {
+                shouldHandleScroll = false;
+            }
+        }
+
+        // マウスホイールによる選択切り替え（ズーム優先条件でなければ有効）
+        if (shouldHandleScroll && Mouse.current != null)
+        {
+            //スクロールの位置を取得
             Vector2 scrollVector = Mouse.current.scroll.ReadValue();
             //スクロールがあったら
             if (scrollVector.y != 0f)
