@@ -15,13 +15,19 @@ public abstract class DominoBase : MonoBehaviour
     [SerializeField] protected int _scorePoint = 10;
     [SerializeField] protected float _toppleThreshold = 30f;
     
+    [Header("Explosion Flags")]
+    [Tooltip("爆弾や爆風の影響を直接受けたドミノかどうか")]
+    [SerializeField] private bool _wasHitByExplosion = false;
+    [Tooltip("爆発の影響を受けたドミノに倒されて連鎖したかどうか")]
+    [SerializeField] private bool _touchedExplodedDomino = false;
+
     protected bool _isToppled = false;
     protected Rigidbody _rb;
     //設置時の角度を記録するための変数
     private Quaternion _initialRotation;
     // わずかな物理の揺れを「静止」とみなすためのしきい値（値を大きくすると緩くなる）
-    private const float LinearMovingThresholdSqr = 0.5f;    // 線速度 > 約0.7 m/s で「動いている」
-    private const float AngularMovingThresholdSqr = 0.25f; // 角速度 > 約0.5 rad/s で「動いている」
+    private const float LinearMovingThresholdSqr = 0.1f;    // 線速度 > 約0.7 m/s で「動いている」
+    private const float AngularMovingThresholdSqr = 0.1f; // 角速度 > 約0.5 rad/s で「動いている」
 
     // 物理的に動いているかの判定
     public bool IsMoving
@@ -34,6 +40,26 @@ public abstract class DominoBase : MonoBehaviour
             return _rb.linearVelocity.sqrMagnitude > LinearMovingThresholdSqr
                 || _rb.angularVelocity.sqrMagnitude > AngularMovingThresholdSqr;
         }
+    }
+
+    /// <summary>
+    /// 爆弾や爆風の影響を直接受けたかどうか。
+    /// 爆発ギミック側から設定されることを想定している。
+    /// </summary>
+    public bool WasHitByExplosion
+    {
+        get => _wasHitByExplosion;
+        set => _wasHitByExplosion = value;
+    }
+
+    /// <summary>
+    /// 爆発の影響を受けたドミノに倒されて連鎖したかどうか。
+    /// こちらも連鎖管理や爆発ギミック側から設定されることを想定している。
+    /// </summary>
+    public bool TouchedExplodedDomino
+    {
+        get => _touchedExplodedDomino;
+        set => _touchedExplodedDomino = value;
     }
 
     protected virtual void Awake()

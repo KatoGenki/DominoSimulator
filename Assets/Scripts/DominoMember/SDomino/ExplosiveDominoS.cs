@@ -48,6 +48,13 @@ public class ExplosiveDomino : DominoBase
 
         foreach (Collider hit in colliders)
         {
+            // 爆発半径内に存在するドミノにはフラグを付与する
+            var domino = hit.GetComponent<DominoBase>();
+            if (domino != null)
+            {
+                domino.WasHitByExplosion = true;
+            }
+
             // 自分自身には衝撃を与えないようにチェック（あるいはRigidbodyがあれば飛ばす）
             if (hit.gameObject == this.gameObject) continue;
 
